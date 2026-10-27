@@ -1,0 +1,12 @@
+{
+  "name": "trand-vine",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspace @trand-vine/core",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}
