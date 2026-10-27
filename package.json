@@ -8,6 +8,7 @@
   "scripts": {
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test:db": "scripts/test-db.sh"
+    "test:db": "scripts/test-db.sh",
+    "build:web": "npm run build:web --workspace @trand-vine/mobile"
   }
 }

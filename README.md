@@ -85,6 +85,14 @@ cd apps/mobile && npx expo start
 
 Kameran kräver en riktig telefon (Expo Go eller development build).
 
+### 4. Webbversion på Vercel (valfritt)
+
+Importera repot i Vercel och låt rotmappen vara projektets rot; `vercel.json`
+sköter bygget (`npm run build:web`, utdata i `dist/`). Lägg in
+`EXPO_PUBLIC_SUPABASE_URL` och `EXPO_PUBLIC_SUPABASE_ANON_KEY` under
+**Settings → Environment Variables** innan första bygget. Webbversionen har
+ingen kameraskanning; där söker man vinet istället.
+
 ## Tester
 
 ```bash
