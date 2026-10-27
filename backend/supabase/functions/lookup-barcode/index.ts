@@ -4,11 +4,10 @@
 // så att Open Food Facts får en korrekt User-Agent.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import {
-  lookupBarcode,
-  openFoodFactsProvider,
-  upcItemDbProvider,
-} from "../../../../packages/core/src/index.ts";
+// Bara de delar av kärnpaketet som behövs här, så att funktionen hålls liten.
+import { lookupBarcode } from "../../../../packages/core/src/lookup.ts";
+import { openFoodFactsProvider } from "../../../../packages/core/src/providers/openFoodFacts.ts";
+import { upcItemDbProvider } from "../../../../packages/core/src/providers/upcItemDb.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
