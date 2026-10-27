@@ -83,6 +83,7 @@ const STRINGS = {
     adviceDisclaimer: "Råden är tumregler baserade på vintyp, druva, region och årgång.",
     error: "Något gick fel",
     cancel: "Avbryt",
+    startFailed: "Appen kunde inte starta. Kontrollera nätverket och försök igen.",
   },
   en: {
     appName: "Trand-vine",
@@ -164,6 +165,7 @@ const STRINGS = {
     adviceDisclaimer: "Advice is a rule of thumb based on wine type, grape, region and vintage.",
     error: "Something went wrong",
     cancel: "Cancel",
+    startFailed: "The app could not start. Check your connection and try again.",
   },
 } satisfies Record<Locale, Record<string, string>>;
 

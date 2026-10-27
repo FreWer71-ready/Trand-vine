@@ -54,8 +54,14 @@ npx supabase --workdir backend db push                          # schema
 npx supabase --workdir backend functions deploy lookup-barcode  # streckkodsuppslag
 ```
 
-I Supabase: **Authentication → Email Templates → Magic Link**, lägg till
-`{{ .Token }}` i mallen så att e-posten innehåller inloggningskoden.
+**Inloggning är avstängd tills vidare.** Appen loggar in varje enhet anonymt,
+så slå på **Authentication → Sign In / Providers → Allow anonymous sign-ins**
+i Supabase. Källaren hör då till enheten/webbläsaren.
+
+För att slå på inloggning med e-postkod igen: sätt `EXPO_PUBLIC_LOGIN_ENABLED=true`
+(i `.env` och i Vercel) och lägg till `{{ .Token }}` i mallen under
+**Authentication → Email Templates → Magic Link**. Koden finns kvar i
+`apps/mobile/src/app/sign-in.tsx`.
 
 ### 2. Importera vindata (valfritt men rekommenderat)
 
