@@ -1,0 +1,34 @@
+# Supabase CLI-konfiguration. Kör kommandon med: supabase --workdir backend <kommando>
+project_id = "trand-vine"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+enabled = true
+site_url = "trandvine://"
+additional_redirect_urls = ["trandvine://auth-callback", "exp://localhost:8081"]
+
+[auth.email]
+enable_signup = true
+# Inloggning med magisk länk – inget lösenord.
+enable_confirmations = false
+
+[auth.external.apple]
+enabled = false
+client_id = ""
+secret = "env(SUPABASE_AUTH_APPLE_SECRET)"
+
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
+
+[functions.lookup-barcode]
+verify_jwt = true
