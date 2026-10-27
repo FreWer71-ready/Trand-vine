@@ -277,8 +277,9 @@ function BottleDetails({
         </Card>
       )}
 
-      {!nonVintage && <Field label={t("vintage")} value={year} onChangeText={setYear} keyboardType="number-pad" maxLength={4} />}
-      <Chips value={nonVintage ? 1 : 0} onChange={(v) => setNonVintage(v === 1)} options={[{ value: 0, label: t("vintage") }, { value: 1, label: t("nonVintage") }]} />
+      <Chips label={t("vintage")} value={nonVintage ? 1 : 0} onChange={(v) => setNonVintage(v === 1)} options={[{ value: 0, label: t("vintage") }, { value: 1, label: t("nonVintage") }]} />
+      {!nonVintage && <Field label={t("vintage")} value={year} onChangeText={setYear} keyboardType="number-pad" maxLength={4} placeholder="2018" />}
+      <Body muted>{t("vintageHelp")}</Body>
 
       <Chips label={t("size")} value={size} onChange={setSize} options={SIZES.map((s) => ({ value: s, label: (s >= 1000 ? `${s / 1000} l` : `${s / 10} cl`).replace(".", locale === "sv" ? "," : ".") }))} />
 
@@ -296,7 +297,7 @@ function BottleDetails({
       <Field label={acq === "gift" ? t("occasion") : t("note")} value={occasion} onChangeText={setOccasion} />
       <Field label={t("location")} value={location} onChangeText={setLocation} />
 
-      <ErrorText>{error}</ErrorText>
+      <ErrorText>{error ?? (!yearValid ? t("needYear") : !isIsoDate(date) ? t("needDate") : !valid ? t("needPrice") : null)}</ErrorText>
       <Button title={t("addBottle")} onPress={save} loading={busy} disabled={!valid} />
     </Screen>
   );
