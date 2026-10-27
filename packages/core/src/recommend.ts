@@ -50,6 +50,7 @@ const STYLE_RULES: Rule[] = [
   { id: "red_burgundy", match: /\b(bourgogne rouge|gevrey|chambolle|vosne|nuits-saint-georges|pommard|volnay)\b/i, ageing: [3, 6, 15, 20], servingC: [14, 16], decantMinutes: 20, food: ["poultry", "mushrooms", "game", "salmon"], occasions: ["romantic", "dinner_party", "gift"] },
   { id: "white_burgundy", match: /\b(chablis|meursault|puligny|chassagne|bourgogne blanc)\b/i, ageing: [1, 3, 8, 12], servingC: [10, 13], decantMinutes: 0, food: ["fish", "shellfish", "poultry"], occasions: ["dinner_party", "romantic"] },
   { id: "riesling_sweet", match: /\b(spätlese|spatlese|auslese|beerenauslese)\b/i, ageing: [2, 5, 20, 30], servingC: [8, 10], decantMinutes: 0, food: ["spicy_asian", "dessert_fruit", "blue_cheese"], occasions: ["dessert", "gift"] },
+  { id: "sancerre_pouilly", match: /\b(sancerre|pouilly-fum[ée])/i, ageing: [0, 1, 5, 8], servingC: [9, 11], decantMinutes: 0, food: ["shellfish", "soft_cheese", "fish", "salads"], occasions: ["dinner_party", "summer", "aperitif"] },
   { id: "beaujolais", match: /\b(beaujolais|morgon|fleurie|moulin-à-vent)\b/i, ageing: [0, 1, 4, 6], servingC: [12, 14], decantMinutes: 0, food: ["charcuterie", "poultry", "pork"], occasions: ["weekday", "summer", "bbq_party"] },
 ];
 
@@ -68,14 +69,14 @@ const GRAPE_RULES: Rule[] = [
   { id: "riesling", match: /riesling/i, ageing: [0, 2, 10, 15], servingC: [8, 10], decantMinutes: 0, food: ["spicy_asian", "fish", "shellfish", "pork"], occasions: ["weekday", "dinner_party", "summer"] },
   { id: "chardonnay", match: /chardonnay/i, ageing: [0, 1, 5, 8], servingC: [10, 13], decantMinutes: 0, food: ["fish", "poultry", "shellfish", "soft_cheese"], occasions: ["dinner_party", "weekday"] },
   { id: "chenin_blanc", match: /chenin/i, ageing: [0, 2, 8, 15], servingC: [9, 11], decantMinutes: 0, food: ["fish", "poultry", "pork", "spicy_asian"], occasions: ["weekday", "dinner_party"] },
-  { id: "sauvignon_blanc", match: /sauvignon blanc/i, ageing: [0, 0, 2, 4], servingC: [7, 10], decantMinutes: 0, food: ["shellfish", "salads", "fish", "soft_cheese"], occasions: ["summer", "aperitif", "weekday"] },
+  { id: "sauvignon_blanc", match: /sauvignon blanc/i, ageing: [0, 0, 3, 5], servingC: [7, 10], decantMinutes: 0, food: ["shellfish", "salads", "fish", "soft_cheese"], occasions: ["summer", "aperitif", "weekday"] },
   { id: "pinot_grigio", match: /pinot gri[gs]/i, ageing: [0, 0, 2, 3], servingC: [7, 10], decantMinutes: 0, food: ["fish", "salads", "aperitif_snacks"], occasions: ["summer", "weekday", "aperitif"] },
   { id: "gewurztraminer", match: /gew[uü]rztraminer/i, ageing: [0, 1, 5, 8], servingC: [8, 10], decantMinutes: 0, food: ["spicy_asian", "soft_cheese"], occasions: ["dinner_party"] },
 ];
 
 const COLOR_DEFAULTS: Record<WineColor, Profile> = {
   red: { id: "red_default", ageing: [0, 1, 4, 6], servingC: [15, 17], decantMinutes: 15, food: ["red_meat", "pasta_tomato", "hard_cheese"], occasions: ["weekday", "dinner_party"] },
-  white: { id: "white_default", ageing: [0, 0, 2, 4], servingC: [8, 11], decantMinutes: 0, food: ["fish", "poultry", "salads"], occasions: ["weekday", "summer"] },
+  white: { id: "white_default", ageing: [0, 1, 3, 5], servingC: [8, 11], decantMinutes: 0, food: ["fish", "poultry", "salads"], occasions: ["weekday", "summer"] },
   rose: { id: "rose_default", ageing: [0, 0, 1, 2], servingC: [7, 10], decantMinutes: 0, food: ["salads", "shellfish", "charcuterie"], occasions: ["summer", "aperitif", "bbq_party"] },
   sparkling: { id: "sparkling_default", ageing: [0, 0, 2, 3], servingC: [6, 9], decantMinutes: 0, food: ["aperitif_snacks", "shellfish"], occasions: ["celebration", "aperitif"] },
   dessert: { id: "dessert_default", ageing: [0, 2, 10, 20], servingC: [8, 11], decantMinutes: 0, food: ["dessert_fruit", "blue_cheese"], occasions: ["dessert"] },

@@ -17,6 +17,12 @@ describe("recommend", () => {
     expect(recommend({ name: "Casillero del Diablo Reserva", grapes: ["Cabernet Sauvignon"], vintage: 2022 }).profileId).toBe("cabernet_sauvignon");
   });
 
+  it("gives Sancerre a longer window than generic Sauvignon Blanc", () => {
+    const r = recommend({ name: "Sancerre", grapes: ["Sauvignon Blanc"], color: "white", vintage: 2019 });
+    expect(r.profileId).toBe("sancerre_pouilly");
+    expect(r.drinkTo).toBe(2027);
+  });
+
   it("falls back to grape, then color", () => {
     expect(recommend({ name: "Cloudy Bay", grapes: ["Sauvignon Blanc"], color: "white", vintage: 2024 }).basis).toBe("grape");
     const r = recommend({ name: "Okänt rosé", color: "rose", vintage: 2025 });

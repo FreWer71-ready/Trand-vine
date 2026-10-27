@@ -1,6 +1,6 @@
 # Trand-vine – förslag på struktur, källor, API:er och funktioner
 
-> Status: förslag / diskussionsunderlag. Inget är byggt ännu.
+> Status: version 1 under uppbyggnad. Se README för vad som är byggt och hur man kör det.
 
 ## 1. Idé i en mening
 
@@ -160,11 +160,8 @@ vintages            – vin + årgång (betyg och råd hör hit)
 reviews             – betyg/recensioner från källor eller användare
   id, vintage_id, source, score, scale, text, author, url, fetched_at
 
-recommendations     – regel-genererade råd (senare ev. AI), cachade per årgång
-  vintage_id, drink_from, drink_to, peak_from, peak_to,
-  storage (temp, liggande, potential_years),
-  food_pairings[], occasions[], serving_temp, decant_minutes,
-  rules_version, generated_at
+ratings             – community-betyg, ett per användare och årgång (privata rader;
+  user_id, vintage_id, score     alla ser bara medelvärdet i vintages)
 
 bottles             – en fysisk flaska som användaren äger/ägt
   id, user_id, vintage_id, size_ml,
@@ -178,6 +175,9 @@ bottles             – en fysisk flaska som användaren äger/ägt
 
 users               – id, display_name, auth_provider, locale
 ```
+
+Råden (drickfönster, lagring, mat, tillfälle) lagras inte – regelmotorn i
+`packages/core` räknar fram dem direkt i appen, gratis och offline.
 
 **Historik** blir då en enkel fråga: alla `bottles` för samma `wine_id`
 (eller samma `vintage_id`) hos användaren, med betyg och anteckningar.
