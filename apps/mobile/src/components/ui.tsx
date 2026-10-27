@@ -28,7 +28,7 @@ export function Screen({ children, scroll = true }: { children: ReactNode; scrol
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["left", "right", "bottom"]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={content} keyboardShouldPersistTaps="handled">
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={[content, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
           {children}
         </ScrollView>
       ) : (
