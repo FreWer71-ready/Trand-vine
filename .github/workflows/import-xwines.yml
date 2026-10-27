@@ -1,0 +1,89 @@
+# Laddar ner X-Wines (CC0) från datasetets officiella Google Drive-mapp och
+# importerar viner och startbetyg till Supabase. Kan köras om; befintliga
+# rader uppdateras.
+#
+# Kräver hemligheten SUPABASE_DB_URL: Supabase → Project Settings → Database →
+# Connection string → "Session pooler" (GitHubs maskiner saknar IPv6, så den
+# direkta adressen fungerar inte).
+name: Importera X-Wines
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version av X-Wines"
+        type: choice
+        options: [Full, Slim, Test]
+        default: Full
+      ratings:
+        description: "Importera betyg (21 miljoner i Full, tar några minuter)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      XWINES_FOLDER: https://drive.google.com/drive/folders/1LqguJNV-aKh1PuWMVx5ELA61LPfGfuu_
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Kontrollera hemligheten
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Hemligheten SUPABASE_DB_URL saknas (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - name: Ladda ner X-Wines
+        run: |
+          pip install --quiet "gdown>=5.2"
+          gdown --folder "$XWINES_FOLDER" -O data/xwines --remaining-ok
+          # Packa upp eventuella zip-filer.
+          find data/xwines -iname '*.zip' -exec unzip -o -q -d data/xwines {} \;
+          echo "Filer:"; find data/xwines -type f -printf '%10s  %p\n'
+
+      - name: Hitta filerna
+        id: files
+        run: |
+          v="${{ inputs.version }}"
+          wines=$(find data/xwines -type f -iname "*${v}*wines*.csv" ! -iname '*rating*' | head -1)
+          ratings=$(find data/xwines -type f -iname "*${v}*rating*.csv" | head -1)
+          if [ -z "$wines" ]; then
+            echo "::error::Hittade ingen vinfil för version $v bland de nedladdade filerna."
+            exit 1
+          fi
+          echo "wines=$wines" >> "$GITHUB_OUTPUT"
+          echo "ratings=$ratings" >> "$GITHUB_OUTPUT"
+          echo "Viner: $wines"; echo "Betyg: ${ratings:-saknas}"
+
+      - name: Skapa SQL
+        run: |
+          ratings=""
+          if [ "${{ inputs.ratings }}" = "true" ] && [ -n "${{ steps.files.outputs.ratings }}" ]; then
+            ratings="${{ steps.files.outputs.ratings }}"
+          fi
+          node --max-old-space-size=6144 node_modules/.bin/tsx packages/importers/src/cli.ts xwines \
+            "${{ steps.files.outputs.wines }}" $ratings > data/xwines.sql
+          ls -lh data/xwines.sql
+
+      - name: Importera till Supabase
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          sudo apt-get install -y -qq postgresql-client > /dev/null
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q -o /dev/null -f data/xwines.sql
+          psql "$SUPABASE_DB_URL" -c "select count(*) as viner from wines where source = 'xwines'; select count(*) as argangar_med_betyg from vintages where seed_rating_count > 0;"

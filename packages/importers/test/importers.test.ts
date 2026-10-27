@@ -57,7 +57,8 @@ describe("X-Wines", () => {
     );
     expect(res.wines).toBe(100);
     expect(res.vintages).toBeGreaterThan(0);
-    expect(out.text).toMatch(/^\\set ON_ERROR_STOP on\nbegin;/);
+    expect(out.text).toMatch(/^\\set ON_ERROR_STOP on\n/);
+    expect(out.text).toContain("set statement_timeout = 0;\nbegin;");
     expect(out.text.trimEnd().endsWith("commit;")).toBe(true);
   });
 });

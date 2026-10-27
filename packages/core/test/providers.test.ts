@@ -28,7 +28,7 @@ describe("openFoodFactsProvider", () => {
       source: "openfoodfacts",
       name: "Côtes du Rhône Rouge 2021",
       producer: "Guigal",
-      country: "france",
+      country: "France",
       color: "red",
       abv: 14,
       vintage: 2021,
@@ -43,6 +43,33 @@ describe("openFoodFactsProvider", () => {
     expect(await openFoodFactsProvider({ fetch: notWine }).lookupByBarcode("1")).toEqual([]);
     const missing = vi.fn(async () => json({ status: 0 }, 404));
     expect(await openFoodFactsProvider({ fetch: missing }).lookupByBarcode("1")).toEqual([]);
+  });
+});
+
+describe("openFoodFactsProvider.search", () => {
+  it("searches wines by text, maps and dedupes results", async () => {
+    const product = (code: string, name: string) => ({
+      code, product_name: name, brands: "Bottega", categories_tags: ["en:wines", "en:red-wines"], quantity: "75 cl",
+    });
+    const fetch = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) =>
+      json({ products: [
+        product("8001", "Amarone della Valpolicella 2018"),
+        product("8002", "Amarone della Valpolicella 2018"),
+        { code: "1", product_name: "Amarone chocolate", categories_tags: ["en:snacks"] },
+      ] }),
+    );
+    const res = await openFoodFactsProvider({ fetch }).search!("amarone");
+    const url = new URL(String(fetch.mock.calls[0]![0]));
+    expect(url.pathname).toBe("/cgi/search.pl");
+    expect(url.searchParams.get("search_terms")).toBe("amarone");
+    expect(url.searchParams.get("tag_0")).toBe("wines");
+    expect(res).toHaveLength(1);
+    expect(res[0]).toMatchObject({ name: "Amarone della Valpolicella 2018", producer: "Bottega", color: "red", vintage: 2018 });
+  });
+
+  it("returns nothing when rate limited", async () => {
+    const fetch = vi.fn(async () => json({}, 429));
+    expect(await openFoodFactsProvider({ fetch }).search!("x")).toEqual([]);
   });
 });
 

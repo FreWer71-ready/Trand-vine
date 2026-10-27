@@ -140,6 +140,8 @@ export async function writeXWinesSql(
   out: Writer,
 ): Promise<{ wines: number; vintages: number }> {
   out.write(`\\set ON_ERROR_STOP on
+-- Hela X-Wines tar några minuter; Supabase har annars en tidsgräns per sats.
+set statement_timeout = 0;
 begin;
 create temp table xw_wines (
   xwines_id text, name text, producer text, country text, region text,
@@ -188,12 +190,19 @@ on conflict (wine_id, coalesce(year, 0)) do update set
   seed_avg_rating = excluded.seed_avg_rating,
   seed_rating_count = excluded.seed_rating_count;
 
-do $$ begin
-  perform refresh_vintage_rating_for(v.id)
-  from vintages v
-  join wines w on w.id = v.wine_id
-  where w.source = 'xwines' and v.seed_rating_count > 0;
-end $$;
+-- Visat medelbetyg = startbetyg + appens användare, i en sats för alla årgångar.
+update vintages v set
+  rating_count = v.seed_rating_count + agg.n,
+  avg_rating = round((v.seed_avg_rating * v.seed_rating_count + agg.total) / (v.seed_rating_count + agg.n), 2)
+from (
+  select v2.id, count(r.score) as n, coalesce(sum(r.score), 0) as total
+  from vintages v2
+  join wines w on w.id = v2.wine_id
+  left join ratings r on r.vintage_id = v2.id
+  where w.source = 'xwines' and v2.seed_rating_count > 0
+  group by v2.id
+) agg
+where v.id = agg.id;
 `);
   }
   out.write("commit;\n");

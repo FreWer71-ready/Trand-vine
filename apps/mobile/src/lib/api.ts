@@ -1,6 +1,7 @@
 // Dataåtkomst mot Supabase. Alla frågor går under användarens inloggning,
 // så RLS i databasen avgör vad som syns.
 
+import { openFoodFactsProvider } from "@trand-vine/core";
 import type {
   AcquisitionType,
   BottleStatus,
@@ -95,6 +96,15 @@ export async function getWine(id: string): Promise<WineRow> {
 export async function searchWines(q: string): Promise<WineRow[]> {
   if (q.trim().length < 2) return [];
   return (check(await supabase.rpc("search_wines", { q, max_results: 20 })) ?? []) as WineRow[];
+}
+
+// Reserv när registret saknar vinet. Körs från klienten så att varje
+// användare har sin egen sökgräns hos Open Food Facts (10/min).
+const off = openFoodFactsProvider();
+
+export async function searchExternal(q: string): Promise<WineCandidate[]> {
+  if (q.trim().length < 3) return [];
+  return off.search!(q.trim());
 }
 
 export async function wineHistory(wineId: string): Promise<HistoryRow[]> {
