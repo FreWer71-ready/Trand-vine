@@ -38,7 +38,13 @@ do $$ begin
   end;
   begin
     update wines set name = 'Hackat' where id = '10000000-0000-0000-0000-000000000001';
-    assert not found, 'användare ska inte kunna ändra registret';
+    raise exception 'borde nekas: användare ändrar registret';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform refresh_vintage_rating_for('20000000-0000-0000-0000-000000000001');
+    raise exception 'borde nekas: intern funktion anropad direkt';
+  exception when insufficient_privilege then null;
   end;
 end $$;
 

@@ -2,13 +2,13 @@
 -- Vinregistret (wines, vintages, wine_barcodes) är gemensamt och växer när
 -- användare bekräftar nya streckkoder. Flaskor och betyg ägs av användaren.
 
-create extension if not exists pg_trgm;
-create extension if not exists unaccent;
+create extension if not exists pg_trgm with schema extensions;
+create extension if not exists unaccent with schema extensions;
 
 -- unaccent() är inte IMMUTABLE och kan därför inte användas direkt i index.
 create or replace function public.immutable_unaccent(text)
 returns text language sql immutable parallel safe strict
-as $$ select public.unaccent('public.unaccent'::regdictionary, $1) $$;
+as $$ select extensions.unaccent('extensions.unaccent'::regdictionary, $1) $$;
 
 create type wine_color as enum ('red', 'white', 'rose', 'sparkling', 'dessert', 'fortified');
 create type acquisition_type as enum ('purchase', 'gift', 'tasting', 'inheritance', 'trade', 'other');
@@ -74,7 +74,7 @@ create table wines (
   ) stored
 );
 
-create index wines_search_trgm on wines using gin (search_text gin_trgm_ops);
+create index wines_search_trgm on wines using gin (search_text extensions.gin_trgm_ops);
 
 create table vintages (
   id uuid primary key default gen_random_uuid(),
@@ -199,6 +199,7 @@ create view wine_ratings with (security_invoker = true) as
 create function public.search_wines(q text, max_results int default 20)
 returns setof wines
 language sql stable
+set search_path = public, extensions
 as $$
   select w.*
   from wines w
@@ -268,3 +269,22 @@ create policy "own bottle photos" on storage.objects
   for all to authenticated
   using (bucket_id = 'bottle-photos' and (storage.foldername(name))[1] = auth.uid()::text)
   with check (bucket_id = 'bottle-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Data API --------------------------------------------------------------------
+
+-- Nya Supabase-projekt exponerar inte alltid tabeller automatiskt. RLS ovan
+-- avgör vilka rader som syns; här ges bara åtkomst till tabellerna.
+grant usage on schema public to authenticated;
+grant select, insert on wines, vintages, wine_barcodes to authenticated;
+grant select, insert, update, delete on bottles, ratings to authenticated;
+grant select, update on profiles to authenticated;
+grant select on wine_ratings to authenticated;
+grant execute on function search_wines(text, int), my_wine_history(uuid) to authenticated;
+
+-- Interna funktioner med förhöjda rättigheter ska inte kunna anropas via API:t.
+revoke execute on function
+  refresh_vintage_rating_for(uuid),
+  refresh_vintage_rating(),
+  bottle_rating_to_ratings(),
+  handle_new_user()
+from public, anon, authenticated;
