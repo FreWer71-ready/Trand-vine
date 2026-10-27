@@ -34,6 +34,7 @@ scripts/test-db.sh      Kör databastester mot en temporär lokal Postgres
 | [UPCitemdb](https://www.upcitemdb.com) | Streckkod → produkt (100 uppslag/dag gratis) |
 | [X-Wines](https://github.com/rogerioxavier/X-Wines) (CC0) | ~100 000 viner, druvor, matkombinationer och 21 milj. betyg som startbetyg |
 | [LWIN](https://www.liv-ex.com/lwin/get-lwin-database) (CC) | 200 000+ viner för sökning och identifiering |
+| Systembolagets sortiment ([spegel](https://github.com/AlexGustafsson/systembolaget-api-data)) | ~6 000 viner med svenska namn, artikelnummer, pris och årgång. Sök på nummer från hyllkant/kvitto eller klistra in en länk från systembolaget.se. Innehåller inga streckkoder. |
 
 Råden kommer från en regelmotor (`packages/core/src/recommend.ts`) som körs i
 appen – gratis och fungerar offline.
@@ -79,6 +80,11 @@ select net.http_post(
 -- Svaret: select * from net._http_response order by id desc limit 1;
 -- Svarar den med "next": kör igen med "skip": <next>.
 ```
+
+Systembolagets sortiment importeras på samma sätt med
+`'{"action":"systembolaget"}'` som body (valfritt `"url"` till en annan spegel i
+samma format). Kör om när sortimentet ska uppdateras. Från egen dator:
+`npm run systembolaget -w @trand-vine/importers -- assortment.json > sb.sql`.
 
 Betygen (21 miljoner rader) är för stora för en funktionskörning; de importeras
 med GitHub-flödet nedan.

@@ -29,9 +29,11 @@ FIX="$ROOT/packages/importers/test/fixtures"
 CLI=(npx --prefix "$ROOT" tsx "$ROOT/packages/importers/src/cli.ts")
 "${CLI[@]}" xwines "$FIX/xwines_wines.csv" "$FIX/xwines_ratings.csv" > "$TMP/xwines.sql" 2>/dev/null
 "${CLI[@]}" lwin "$FIX/lwin_sample.csv" > "$TMP/lwin.sql" 2>/dev/null
+"${CLI[@]}" systembolaget "$FIX/systembolaget_sample.json" > "$TMP/sb.sql" 2>/dev/null
 chmod o+r "$TMP"/*.sql
 for i in 1 2; do
   "${PSQL[@]}" -o /dev/null -f "$TMP/xwines.sql"
   "${PSQL[@]}" -o /dev/null -f "$TMP/lwin.sql"
+  "${PSQL[@]}" -o /dev/null -f "$TMP/sb.sql"
 done
 "${PSQL[@]}" -f "$ROOT/backend/supabase/tests/import.test.sql"

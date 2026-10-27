@@ -17,5 +17,27 @@ begin
          'avg_rating synkat med startbetyg';
   assert (select count(*) from wine_ratings) > 0, 'betyg på vinnivå';
   assert (select count(*) from search_wines('margaux')) >= 1, 'sökning i LWIN';
+  -- Systembolaget: tre viner (öl, vinlåda och dubblett bortfiltrerade), ingen dubblering vid omkörning.
+  assert (select count(*) from wines where source = 'systembolaget') = 3, 'Systembolaget: 3 viner';
+  assert (select count(*) from systembolaget_products) = 3, 'Systembolaget: 3 artiklar';
+  assert (select (price, vintage, volume_ml) from systembolaget_products where product_number = '5570901')
+    = (999::numeric(10,2), 2018::smallint, 750), 'pris, årgång och storlek';
 end $$;
+
+-- Sökning som inloggad användare: kort nummer (hyllkant), långt nummer (webbadress) och namn.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+do $$
+begin
+  assert (select name from search_wines('55709') limit 1) = 'Amarone della Valpolicella', 'kort artikelnummer';
+  assert (select name from search_wines(' 5570901 ') limit 1) = 'Amarone della Valpolicella', 'långt artikelnummer';
+  assert (select count(*) from search_wines('commandaria')) = 1, 'sökning på namn';
+  assert (select count(*) from systembolaget_products) = 3, 'användare läser artiklar';
+  begin
+    perform private.import_systembolaget('[]'::jsonb);
+    raise exception 'borde nekas: import som användare';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+reset role;
 \echo 'Importtester passerade'

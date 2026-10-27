@@ -35,6 +35,7 @@ import {
   type HistoryRow,
 } from "../../lib/api.ts";
 import { isIsoDate, recommendationFor, today, wineTitle } from "../../lib/format.ts";
+import { openAddAgain } from "../../lib/scanStore.ts";
 import { useLocale, useT } from "../../lib/i18n.tsx";
 import { useTheme } from "../../lib/theme.tsx";
 
@@ -182,6 +183,13 @@ export default function BottleScreen() {
             }}
           />
         </>
+      )}
+      {!consuming && (
+        <Button
+          title={t("addAgain")}
+          variant={inCellar ? "secondary" : "primary"}
+          onPress={() => openAddAgain({ wine, year: bottle.vintages.year, sizeMl: bottle.size_ml, location: bottle.location })}
+        />
       )}
       {consuming && (
         <ConsumeForm
