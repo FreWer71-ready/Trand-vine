@@ -4,14 +4,16 @@ import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "ex
 import { router, useIsFocused } from "expo-router";
 import { useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { Body, Button, ErrorText, Loading, Screen, colors } from "../../components/ui.tsx";
+import { Body, Button, ErrorText, Loading, Screen } from "../../components/ui.tsx";
 import { lookupBarcode } from "../../lib/api.ts";
 import { useT } from "../../lib/i18n.tsx";
 import { setPendingScan } from "../../lib/scanStore.ts";
+import { useTheme } from "../../lib/theme.tsx";
 
 export default function Scan() {
   const t = useT();
   const focused = useIsFocused();
+  const theme = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,10 +65,10 @@ export default function Scan() {
       )}
       <View style={styles.overlay}>
         <View style={styles.frame} />
-        <Text style={styles.hint}>{busy ? t("lookingUp") : t("pointAtBarcode")}</Text>
+        <Text style={[styles.hint, { fontFamily: theme.fonts.heading.native }]}>{busy ? t("lookingUp") : t("pointAtBarcode")}</Text>
         {busy && <ActivityIndicator color="#fff" />}
       </View>
-      <View style={styles.bottom}>
+      <View style={[styles.bottom, { backgroundColor: theme.colors.background }]}>
         <ErrorText>{error}</ErrorText>
         <Button title={t("searchInstead")} variant="secondary" onPress={searchInstead} />
       </View>
@@ -77,6 +79,6 @@ export default function Scan() {
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
   frame: { width: "80%", height: 140, borderWidth: 3, borderColor: "#fff", borderRadius: 16 },
-  hint: { color: "#fff", fontSize: 16, fontWeight: "600", textShadowColor: "#000", textShadowRadius: 4 },
-  bottom: { padding: 16, gap: 8, backgroundColor: colors.bg },
+  hint: { color: "#fff", fontSize: 17, textShadowColor: "#000", textShadowRadius: 4 },
+  bottom: { padding: 16, gap: 8 },
 });

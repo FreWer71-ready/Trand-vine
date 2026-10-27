@@ -1,68 +1,104 @@
+// Grundkomponenter. All färg, typografi och form kommer från designsystemets
+// tema (useTheme), så att appen kan byta mellan Tour och Party.
+
 import type { DrinkPhase } from "@trand-vine/core";
-import type { ReactNode } from "react";
+import type { Theme } from "@trand-vine/design";
+import { useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
   type TextInputProps,
+  type TextStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../lib/theme.tsx";
 
-export const colors = {
-  wine: "#5B1A2E",
-  wineLight: "#F4E9EC",
-  text: "#1F1A1C",
-  muted: "#6B6266",
-  border: "#E2DADD",
-  bg: "#FCFAFA",
-  card: "#FFFFFF",
-  success: "#2E6B3F",
-  warning: "#9A5B00",
-  danger: "#A12A2A",
-};
-
-export const PHASE_COLORS: Record<DrinkPhase, string> = {
-  too_young: colors.muted,
-  ready: colors.success,
-  peak: colors.success,
-  past_peak: colors.warning,
-  over: colors.danger,
-};
+export function phaseColor(theme: Theme, phase: DrinkPhase): string {
+  const c = theme.colors;
+  return { too_young: c.textMuted, ready: c.success, peak: c.success, past_peak: c.warning, over: c.danger }[phase];
+}
 
 export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+  const theme = useTheme();
+  const content = { padding: theme.space.lg, gap: theme.space.md };
   return (
-    <SafeAreaView style={styles.screen} edges={["left", "right", "bottom"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["left", "right", "bottom"]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={content} keyboardShouldPersistTaps="handled">
           {children}
         </ScrollView>
       ) : (
-        <View style={[styles.content, { flex: 1 }]}>{children}</View>
+        <View style={[content, { flex: 1 }]}>{children}</View>
       )}
     </SafeAreaView>
   );
 }
 
-export function Title({ children }: { children: ReactNode }) {
-  return <Text style={styles.title}>{children}</Text>;
+type Variant = "display" | "title" | "heading" | "cardTitle" | "body" | "strong" | "muted" | "label" | "data";
+
+/** Text i en av designsystemets roller. */
+export function T({
+  variant = "body",
+  color,
+  style,
+  children,
+  numberOfLines,
+}: {
+  variant?: Variant;
+  color?: string;
+  style?: TextStyle;
+  children: ReactNode;
+  numberOfLines?: number;
+}) {
+  const theme = useTheme();
+  const { fonts, type, colors } = theme;
+  const styles: Record<Variant, TextStyle> = {
+    display: { fontFamily: fonts.display.native, fontSize: type.display, lineHeight: type.display * 1.15 },
+    title: { fontFamily: fonts.display.native, fontSize: type.title, lineHeight: type.title * 1.2 },
+    heading: { fontFamily: fonts.heading.native, fontSize: type.heading, marginTop: theme.space.sm },
+    cardTitle: { fontFamily: fonts.heading.native, fontSize: type.body + 1 },
+    body: { fontFamily: fonts.body.native, fontSize: type.body, lineHeight: type.body * 1.4 },
+    strong: { fontFamily: fonts.bodyStrong.native, fontSize: type.body, lineHeight: type.body * 1.4 },
+    muted: { fontFamily: fonts.body.native, fontSize: type.small, lineHeight: type.small * 1.4, color: colors.textMuted },
+    label: {
+      fontFamily: fonts.label.native,
+      fontSize: type.label,
+      color: colors.textMuted,
+      letterSpacing: theme.label.letterSpacing,
+      textTransform: theme.label.uppercase ? "uppercase" : "none",
+    },
+    data: { fontFamily: fonts.data.native, fontSize: type.small, fontVariant: ["tabular-nums"] },
+  };
+  return (
+    <Text numberOfLines={numberOfLines} style={[{ color: colors.text }, styles[variant], color ? { color } : null, style]}>
+      {children}
+    </Text>
+  );
 }
 
-export function Heading({ children }: { children: ReactNode }) {
-  return <Text style={styles.heading}>{children}</Text>;
-}
-
-export function Body({ children, muted }: { children: ReactNode; muted?: boolean }) {
-  return <Text style={[styles.body, muted && { color: colors.muted }]}>{children}</Text>;
-}
+export const Title = ({ children }: { children: ReactNode }) => <T variant="title">{children}</T>;
+export const Heading = ({ children }: { children: ReactNode }) => <T variant="heading">{children}</T>;
+export const Body = ({ children, muted }: { children: ReactNode; muted?: boolean }) => (
+  <T variant={muted ? "muted" : "body"}>{children}</T>
+);
 
 export function Card({ children, onPress, highlight }: { children: ReactNode; onPress?: () => void; highlight?: boolean }) {
-  const style = [styles.card, highlight && { borderColor: colors.wine, backgroundColor: colors.wineLight }];
+  const theme = useTheme();
+  const c = theme.colors;
+  const style = {
+    backgroundColor: highlight ? c.highlight : c.surface,
+    borderRadius: theme.radius.card,
+    borderWidth: 1,
+    borderColor: highlight ? c.accent : c.border,
+    padding: theme.space.lg - 2,
+    gap: theme.space.xs,
+  };
   return onPress ? (
-    <Pressable onPress={onPress} style={({ pressed }) => [...style, pressed && { opacity: 0.7 }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [style, pressed && { opacity: 0.75 }]}>
       {children}
     </Pressable>
   ) : (
@@ -70,6 +106,10 @@ export function Card({ children, onPress, highlight }: { children: ReactNode; on
   );
 }
 
+/**
+ * Knapp. Party: färgad kant under knappen som trycks ner (3D-tryck).
+ * Tour: platt knapp med ram och etiketter i versaler.
+ */
 export function Button({
   title,
   onPress,
@@ -83,32 +123,78 @@ export function Button({
   loading?: boolean;
   disabled?: boolean;
 }) {
+  const theme = useTheme();
+  const c = theme.colors;
+  const b = theme.button;
+  const [pressed, setPressed] = useState(false);
   const primary = variant === "primary";
+  const bg = primary ? c.primary : c.secondary;
+  const fg = primary ? c.onPrimary : c.onSecondary;
+  const edge = primary ? c.primaryEdge : c.secondaryEdge;
+  const inactive = disabled || loading;
+  const press = b.style === "press";
+  const down = press && pressed && !inactive;
+
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled: !!inactive, busy: !!loading }}
       onPress={onPress}
-      disabled={disabled || loading}
-      style={({ pressed }) => [
-        styles.button,
-        primary ? { backgroundColor: colors.wine } : { borderColor: colors.wine, borderWidth: 1 },
-        (pressed || disabled) && { opacity: 0.6 },
-      ]}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      disabled={inactive}
+      style={{
+        minHeight: 50,
+        borderRadius: theme.radius.button,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: theme.space.xl,
+        backgroundColor: bg,
+        opacity: inactive ? 0.55 : !press && pressed ? 0.8 : 1,
+        ...(press
+          ? { borderBottomWidth: down ? 0 : b.edgeHeight, borderBottomColor: edge, marginTop: down ? b.edgeHeight : 0 }
+          : { borderWidth: 1, borderColor: edge }),
+      }}
     >
       {loading ? (
-        <ActivityIndicator color={primary ? "#fff" : colors.wine} />
+        <ActivityIndicator color={fg} />
       ) : (
-        <Text style={[styles.buttonText, { color: primary ? "#fff" : colors.wine }]}>{title}</Text>
+        <Text
+          style={{
+            color: fg,
+            fontFamily: theme.fonts[b.font].native,
+            fontSize: b.uppercase ? 14 : 17,
+            letterSpacing: b.letterSpacing,
+            textTransform: b.uppercase ? "uppercase" : "none",
+          }}
+        >
+          {title}
+        </Text>
       )}
     </Pressable>
   );
 }
 
 export function Field({ label, ...props }: TextInputProps & { label: string }) {
+  const theme = useTheme();
+  const c = theme.colors;
   return (
-    <View style={{ gap: 4 }}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput placeholderTextColor={colors.muted} style={styles.input} {...props} />
+    <View style={{ gap: theme.space.xs }}>
+      <T variant="label">{label}</T>
+      <TextInput
+        placeholderTextColor={c.textMuted}
+        style={{
+          borderWidth: 1,
+          borderColor: c.border,
+          borderRadius: theme.radius.field,
+          padding: theme.space.md,
+          fontSize: theme.type.body,
+          fontFamily: theme.fonts.body.native,
+          backgroundColor: c.surface,
+          color: c.text,
+        }}
+        {...props}
+      />
     </View>
   );
 }
@@ -124,10 +210,12 @@ export function Chips<T extends string | number>({
   onChange: (v: T) => void;
   label?: string;
 }) {
+  const theme = useTheme();
+  const c = theme.colors;
   return (
-    <View style={{ gap: 4 }}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <View style={styles.chips}>
+    <View style={{ gap: theme.space.xs }}>
+      {label && <TLabel>{label}</TLabel>}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.space.sm }}>
         {options.map((o) => {
           const selected = o.value === value;
           return (
@@ -136,9 +224,18 @@ export function Chips<T extends string | number>({
               accessibilityRole="button"
               accessibilityState={{ selected }}
               onPress={() => onChange(o.value)}
-              style={[styles.chip, selected && { backgroundColor: colors.wine, borderColor: colors.wine }]}
+              style={{
+                borderWidth: 1,
+                borderColor: selected ? c.primary : c.border,
+                borderRadius: theme.radius.chip,
+                paddingHorizontal: theme.space.md,
+                paddingVertical: 7,
+                backgroundColor: selected ? c.primary : c.surface,
+              }}
             >
-              <Text style={{ color: selected ? "#fff" : colors.text }}>{o.label}</Text>
+              <Text style={{ color: selected ? c.onPrimary : c.text, fontFamily: theme.fonts.body.native, fontSize: theme.type.small + 1 }}>
+                {o.label}
+              </Text>
             </Pressable>
           );
         })}
@@ -147,12 +244,18 @@ export function Chips<T extends string | number>({
   );
 }
 
+const TLabel = ({ children }: { children: ReactNode }) => <T variant="label">{children}</T>;
+
 export function Tags({ items }: { items: string[] }) {
+  const theme = useTheme();
   return (
-    <View style={styles.chips}>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.space.sm }}>
       {items.map((t) => (
-        <View key={t} style={[styles.chip, { backgroundColor: colors.wineLight, borderColor: colors.wineLight }]}>
-          <Text>{t}</Text>
+        <View
+          key={t}
+          style={{ backgroundColor: theme.colors.tag, borderRadius: theme.radius.chip, paddingHorizontal: theme.space.md, paddingVertical: 6 }}
+        >
+          <Text style={{ color: theme.colors.onTag, fontFamily: theme.fonts.body.native, fontSize: theme.type.small + 1 }}>{t}</Text>
         </View>
       ))}
     </View>
@@ -160,11 +263,12 @@ export function Tags({ items }: { items: string[] }) {
 }
 
 export function Stars({ value, onChange }: { value: number | null; onChange?: (v: number) => void }) {
+  const theme = useTheme();
   return (
     <View style={{ flexDirection: "row", gap: 6 }}>
       {[1, 2, 3, 4, 5].map((n) => (
         <Pressable key={n} disabled={!onChange} onPress={() => onChange?.(n)} accessibilityLabel={`${n}`}>
-          <Text style={{ fontSize: onChange ? 32 : 18, color: colors.wine }}>
+          <Text style={{ fontSize: onChange ? 32 : 18, color: theme.colors.accent }}>
             {value !== null && n <= Math.round(value) ? "★" : "☆"}
           </Text>
         </Pressable>
@@ -174,50 +278,15 @@ export function Stars({ value, onChange }: { value: number | null; onChange?: (v
 }
 
 export function Loading() {
+  const theme = useTheme();
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
-      <ActivityIndicator color={colors.wine} />
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, backgroundColor: theme.colors.background }}>
+      <ActivityIndicator color={theme.colors.primary} />
     </View>
   );
 }
 
 export function ErrorText({ children }: { children: ReactNode }) {
-  return children ? <Text style={{ color: colors.danger }}>{children}</Text> : null;
+  const theme = useTheme();
+  return children ? <T color={theme.colors.danger}>{children}</T> : null;
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: 16, gap: 12 },
-  title: { fontSize: 24, fontWeight: "700", color: colors.text },
-  heading: { fontSize: 17, fontWeight: "600", color: colors.text, marginTop: 8 },
-  body: { fontSize: 15, color: colors.text, lineHeight: 21 },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 14,
-    gap: 4,
-  },
-  button: { borderRadius: 10, paddingVertical: 14, alignItems: "center", justifyContent: "center" },
-  buttonText: { fontSize: 16, fontWeight: "600" },
-  label: { fontSize: 13, color: colors.muted, fontWeight: "500" },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: colors.card,
-    color: colors.text,
-  },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    backgroundColor: colors.card,
-  },
-});

@@ -10,8 +10,7 @@ import {
 } from "@trand-vine/core";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Text } from "react-native";
-import { Body, Button, Card, Chips, ErrorText, Field, Heading, Screen, Title, colors } from "../components/ui.tsx";
+import { Body, Button, Card, Chips, ErrorText, Field, Heading, Screen, T, Title } from "../components/ui.tsx";
 import {
   createBottle,
   createWine,
@@ -131,8 +130,8 @@ function ChooseWine({ scan, onChoose }: { scan: ScanResult | null; onChoose: (c:
 function WineCard({ title, subtitle, onPress }: { title: string; subtitle?: string; onPress: () => void }) {
   return (
     <Card onPress={onPress}>
-      <Text style={{ fontSize: 16, fontWeight: "600" }}>{title}</Text>
-      {!!subtitle && <Text style={{ color: colors.muted }}>{subtitle}</Text>}
+      <T variant="cardTitle">{title}</T>
+      {!!subtitle && <T variant="muted">{subtitle}</T>}
     </Card>
   );
 }
@@ -215,7 +214,7 @@ function BottleDetails({
 
       {history.length > 0 && (
         <Card highlight>
-          <Text style={{ fontWeight: "700", color: colors.wine }}>{t("hadBefore")}</Text>
+          <T variant="cardTitle">{t("hadBefore")}</T>
           <Body>{history.length === 1 ? t("hadBeforeOne") : t("hadBeforeCount", { n: history.length })}</Body>
           {history.slice(0, 3).map((h) => (
             <Body key={h.bottle_id} muted>

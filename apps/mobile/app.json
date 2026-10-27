@@ -33,7 +33,8 @@
           "cameraPermission": "Trand-vine använder kameran för att skanna streckkoden på vinflaskor. / Trand-vine uses the camera to scan barcodes on wine bottles.",
           "recordAudioAndroid": false
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

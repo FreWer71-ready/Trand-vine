@@ -10,7 +10,7 @@ import {
 } from "@trand-vine/core";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import {
   Body,
   Button,
@@ -19,12 +19,12 @@ import {
   Field,
   Heading,
   Loading,
-  PHASE_COLORS,
   Screen,
   Stars,
   Tags,
+  T,
   Title,
-  colors,
+  phaseColor,
 } from "../../components/ui.tsx";
 import {
   getBottle,
@@ -36,11 +36,13 @@ import {
 } from "../../lib/api.ts";
 import { isIsoDate, recommendationFor, today, wineTitle } from "../../lib/format.ts";
 import { useLocale, useT } from "../../lib/i18n.tsx";
+import { useTheme } from "../../lib/theme.tsx";
 
 export default function BottleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const t = useT();
   const locale = useLocale();
+  const theme = useTheme();
   const [bottle, setBottle] = useState<BottleRow | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [wineAvg, setWineAvg] = useState<{ avg_rating: number; rating_count: number } | null>(null);
@@ -86,12 +88,12 @@ export default function BottleScreen() {
       </Body>
 
       <Card>
-        <Text style={{ color: colors.muted }}>{t("community")}</Text>
+        <T variant="label">{t("community")}</T>
         {rating?.avg ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Stars value={rating.avg} />
-            <Text style={{ fontWeight: "600" }}>{rating.avg.toFixed(1)}</Text>
-            <Text style={{ color: colors.muted }}>{t("ratingsCount", { n: rating.n })}</Text>
+            <T variant="data">{rating.avg.toFixed(1)}</T>
+            <T variant="muted">{t("ratingsCount", { n: rating.n })}</T>
           </View>
         ) : (
           <Body muted>{t("noRatings")}</Body>
@@ -99,9 +101,9 @@ export default function BottleScreen() {
       </Card>
 
       <Card>
-        <Text style={{ color: colors.muted }}>{t("drinkWindow")}</Text>
-        <Text style={{ fontSize: 18, fontWeight: "700", color: PHASE_COLORS[phase] }}>{PHASE_LABELS[phase][locale]}</Text>
-        <Body>{rec.drinkFrom}–{rec.drinkTo} · {t("peak")} {rec.peakFrom}–{rec.peakTo}</Body>
+        <T variant="label">{t("drinkWindow")}</T>
+        <T variant="title" color={phaseColor(theme, phase)}>{PHASE_LABELS[phase][locale]}</T>
+        <T variant="data">{rec.drinkFrom}–{rec.drinkTo} · {t("peak")} {rec.peakFrom}–{rec.peakTo}</T>
       </Card>
 
       <Heading>{t("storage")}</Heading>
@@ -139,10 +141,10 @@ export default function BottleScreen() {
 
       {!inCellar && (
         <Card>
-          <Text style={{ fontWeight: "600" }}>
+          <T variant="cardTitle">
             {bottle.status === "consumed" ? t("consumed") : t("givenAway")}
             {bottle.consumed_at ? ` · ${bottle.consumed_at}` : ""}
-          </Text>
+          </T>
           {bottle.consumed_with && <Body>{t("consumedWith")} {bottle.consumed_with}</Body>}
           {bottle.consumed_food && <Body>{t("consumedFood")} {bottle.consumed_food}</Body>}
           {bottle.rating && <Stars value={bottle.rating} />}
@@ -155,10 +157,10 @@ export default function BottleScreen() {
           <Heading>{t("yourHistory")}</Heading>
           {history.map((h) => (
             <Card key={h.bottle_id}>
-              <Text style={{ fontWeight: "600" }}>
+              <T variant="cardTitle">
                 {h.year ?? "NV"} · {ACQUISITION_LABELS[h.acquisition_type][locale]}
                 {h.gift_from ? ` (${h.gift_from})` : ""}
-              </Text>
+              </T>
               {h.consumed_at && <Body muted>{h.consumed_at}{h.consumed_with ? ` · ${h.consumed_with}` : ""}{h.consumed_food ? ` · ${h.consumed_food}` : ""}</Body>}
               {h.rating && <Stars value={h.rating} />}
               {h.notes && <Body muted>{h.notes}</Body>}
@@ -215,7 +217,7 @@ function ConsumeForm({
       <Field label={t("date")} value={date} onChangeText={setDate} maxLength={10} />
       <Field label={t("consumedWith")} value={withWhom} onChangeText={setWithWhom} />
       <Field label={t("consumedFood")} value={food} onChangeText={setFood} />
-      <Text style={{ color: colors.muted }}>{t("yourRating")}</Text>
+      <T variant="label">{t("yourRating")}</T>
       <Stars value={rating} onChange={setRating} />
       <Field label={t("notes")} value={notes} onChangeText={setNotes} multiline />
       <ErrorText>{error}</ErrorText>

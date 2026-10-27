@@ -3,15 +3,17 @@
 import { COLOR_LABELS, PHASE_LABELS, type WineColor } from "@trand-vine/core";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { Text, View } from "react-native";
-import { Body, Button, Card, Chips, ErrorText, Loading, PHASE_COLORS, Screen, colors } from "../../components/ui.tsx";
+import { View } from "react-native";
+import { Body, Button, Card, Chips, ErrorText, Loading, Screen, T, phaseColor } from "../../components/ui.tsx";
 import { listBottles, type BottleRow } from "../../lib/api.ts";
 import { sortByUrgency, wineTitle } from "../../lib/format.ts";
 import { useLocale, useT } from "../../lib/i18n.tsx";
+import { useTheme } from "../../lib/theme.tsx";
 
 export default function Cellar() {
   const t = useT();
   const locale = useLocale();
+  const theme = useTheme();
   const [bottles, setBottles] = useState<BottleRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [color, setColor] = useState<WineColor | "all">("all");
@@ -50,12 +52,12 @@ export default function Cellar() {
       )}
       {shown.map(({ bottle, phase, rec }) => (
         <Card key={bottle.id} onPress={() => router.push(`/bottle/${bottle.id}`)}>
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>{wineTitle(bottle.vintages)}</Text>
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={{ color: PHASE_COLORS[phase], fontWeight: "500" }}>{PHASE_LABELS[phase][locale]}</Text>
-            <Text style={{ color: colors.muted }}>{rec.drinkFrom}–{rec.drinkTo}</Text>
+          <T variant="cardTitle">{wineTitle(bottle.vintages)}</T>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <T variant="strong" color={phaseColor(theme, phase)}>{PHASE_LABELS[phase][locale]}</T>
+            <T variant="data" color={theme.colors.textMuted}>{rec.drinkFrom}–{rec.drinkTo}</T>
           </View>
-          {bottle.location && <Text style={{ color: colors.muted }}>{bottle.location}</Text>}
+          {bottle.location && <T variant="muted">{bottle.location}</T>}
         </Card>
       ))}
     </Screen>

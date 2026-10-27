@@ -3,12 +3,20 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo-google-fonts/abril-fatface": "^0.4.1",
+    "@expo-google-fonts/fraunces": "^0.4.1",
+    "@expo-google-fonts/fredoka": "^0.4.1",
+    "@expo-google-fonts/ibm-plex-mono": "^0.4.1",
+    "@expo-google-fonts/lora": "^0.4.2",
+    "@expo-google-fonts/nunito": "^0.4.2",
+    "@expo-google-fonts/special-elite": "^0.4.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "^2.118.0",
     "@trand-vine/core": "*",
     "expo": "~58.0.19",
     "expo-camera": "~58.0.12",
     "expo-constants": "~58.0.13",
+    "expo-font": "~58.0.10",
     "expo-linking": "~58.0.14",
     "expo-localization": "~58.0.5",
     "expo-router": "~58.0.26",
@@ -19,7 +27,8 @@
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "~4.30.0",
     "react-native-url-polyfill": "^4.0.0",
-    "react-native-web": "~0.21.4"
+    "react-native-web": "~0.21.4",
+    "@trand-vine/design": "*"
   },
   "devDependencies": {
     "@types/react": "~19.3.0",
