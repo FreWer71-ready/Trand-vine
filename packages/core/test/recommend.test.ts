@@ -34,6 +34,11 @@ describe("recommend", () => {
     expect(r.drinkFrom).toBe(2026);
   });
 
+  it("prefers food pairings from source data", () => {
+    expect(recommend({ name: "Barolo", knownFood: ["pizza"] }).food).toEqual(["pizza"]);
+    expect(recommend({ name: "Barolo", knownFood: [] }).food).toContain("game");
+  });
+
   it("computes drink phase", () => {
     const r = recommend({ name: "Barolo", vintage: 2016 });
     expect(drinkPhase(r, 2020)).toBe("too_young");

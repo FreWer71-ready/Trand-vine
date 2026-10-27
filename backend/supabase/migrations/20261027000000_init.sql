@@ -58,6 +58,11 @@ create table wines (
   color wine_color,
   grapes text[] not null default '{}',
   abv numeric(4, 1) check (abv between 0 and 30),
+  body text,      -- t.ex. "Full-bodied" (X-Wines)
+  acidity text,   -- Low | Medium | High (X-Wines)
+  -- Matkombinationer från källdata, som FoodKey i packages/core/src/recommend.ts.
+  -- Tom = regelmotorn väljer.
+  food_pairings text[] not null default '{}',
   image_url text,
   lwin text unique,
   xwines_id text unique,
@@ -133,12 +138,10 @@ create table ratings (
   primary key (user_id, vintage_id)
 );
 
-create function public.refresh_vintage_rating() returns trigger
-language plpgsql security definer set search_path = public
+-- Räknar om medelbetyget för en årgång. Anropas av trigger och efter import.
+create function public.refresh_vintage_rating_for(vid uuid) returns void
+language sql security definer set search_path = public
 as $$
-declare
-  vid uuid := coalesce(new.vintage_id, old.vintage_id);
-begin
   update vintages v set
     rating_count = v.seed_rating_count + agg.n,
     avg_rating = case
@@ -149,7 +152,14 @@ begin
     end
   from (select count(*) as n, coalesce(sum(score), 0) as total
         from ratings where vintage_id = vid) agg
-  where v.id = vid;
+  where v.id = vid
+$$;
+
+create function public.refresh_vintage_rating() returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  perform refresh_vintage_rating_for(coalesce(new.vintage_id, old.vintage_id));
   return null;
 end $$;
 
@@ -174,6 +184,15 @@ end $$;
 create trigger bottles_rating
   after insert or update of rating on bottles
   for each row execute function public.bottle_rating_to_ratings();
+
+-- Betyg på vinnivå (alla årgångar) – visas när den egna årgången saknar betyg.
+create view wine_ratings with (security_invoker = true) as
+  select wine_id,
+         round(sum(avg_rating * rating_count) / nullif(sum(rating_count), 0), 2) as avg_rating,
+         sum(rating_count)::int as rating_count
+  from vintages
+  where rating_count > 0
+  group by wine_id;
 
 -- Sökning (för etikett-OCR och manuell sökning) ------------------------------
 

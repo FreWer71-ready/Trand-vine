@@ -92,6 +92,8 @@ export interface RecommendInput {
   vintage?: number | null;
   /** År som NV-viner räknas från (t.ex. inköpsår). Standard: i år. */
   referenceYear?: number;
+  /** Matkombinationer från källdata (t.ex. X-Wines) – går före regelmotorns. */
+  knownFood?: FoodKey[];
 }
 
 export interface Recommendation {
@@ -159,7 +161,7 @@ export function recommend(input: RecommendInput): Recommendation {
     },
     servingTempC: profile.servingC,
     decantMinutes: profile.decantMinutes,
-    food: profile.food,
+    food: input.knownFood?.length ? input.knownFood : profile.food,
     occasions: [...occasions],
   };
 }

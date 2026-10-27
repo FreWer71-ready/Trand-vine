@@ -23,3 +23,15 @@ PSQL=("${RUN[@]}" "$PGBIN/psql" -h "$TMP" -p "$PORT" -U postgres -d postgres -v 
 for f in "$ROOT"/backend/supabase/migrations/*.sql; do "${PSQL[@]}" -f "$f"; done
 "${PSQL[@]}" -f "$ROOT/backend/supabase/tests/grants.sql"
 "${PSQL[@]}" -f "$ROOT/backend/supabase/tests/schema.test.sql"
+
+# Import av öppna dataset, två gånger för att visa att det går att köra om.
+FIX="$ROOT/packages/importers/test/fixtures"
+CLI=(npx --prefix "$ROOT" tsx "$ROOT/packages/importers/src/cli.ts")
+"${CLI[@]}" xwines "$FIX/xwines_wines.csv" "$FIX/xwines_ratings.csv" > "$TMP/xwines.sql" 2>/dev/null
+"${CLI[@]}" lwin "$FIX/lwin_sample.csv" > "$TMP/lwin.sql" 2>/dev/null
+chmod o+r "$TMP"/*.sql
+for i in 1 2; do
+  "${PSQL[@]}" -o /dev/null -f "$TMP/xwines.sql"
+  "${PSQL[@]}" -o /dev/null -f "$TMP/lwin.sql"
+done
+"${PSQL[@]}" -f "$ROOT/backend/supabase/tests/import.test.sql"

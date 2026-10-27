@@ -1,0 +1,6 @@
+LWIN,STATUS,DISPLAY_NAME,PRODUCER_TITLE,PRODUCER_NAME,WINE,COUNTRY,REGION,SUB_REGION,SITE,PARCEL,COLOUR,TYPE,SUB_TYPE,DESIGNATION,CLASSIFICATION,VINTAGE_CONFIG,FIRST_VINTAGE,FINAL_VINTAGE
+1012361,Live,"Chateau Margaux, Margaux",Chateau,Margaux,,France,Bordeaux,Margaux,,,Red,Wine,Still,AOP,Premier Cru Classe,sequential,,
+1098765,Live,"Krug, Grande Cuvee Brut",,Krug,Grande Cuvee Brut,France,Champagne,,,,White,Wine,Sparkling,AOP,,single,,
+1111111,Live,"Taylor's, Vintage Port",,Taylor's,Vintage Port,Portugal,Douro,,,,Red,Fortified Wine,,DOP,,sequential,,
+1222222,Deleted,"Old Entry",,Someone,,France,Loire,,,,White,Wine,Still,,,,,
+1333333,Live,"Macallan 12",,Macallan,,Scotland,Speyside,,,,,Spirit,Whisky,,,,,
