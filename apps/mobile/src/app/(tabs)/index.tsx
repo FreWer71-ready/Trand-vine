@@ -48,14 +48,17 @@ export default function Cellar() {
           value={color}
           onChange={setColor}
           options={[
-            { value: "all" as const, label: t("all", { n: bottles.length }) },
+            { value: "all" as const, label: t("all", { n: bottles.reduce((sum, b) => sum + b.quantity, 0) }) },
             ...present.map((c) => ({ value: c, label: COLOR_LABELS[c][locale] })),
           ]}
         />
       )}
       {shown.map(({ bottle, phase, rec }) => (
         <Card key={bottle.id} onPress={() => router.push(`/bottle/${bottle.id}`)}>
-          <T variant="cardTitle">{wineTitle(bottle.vintages)}</T>
+          <T variant="cardTitle">
+            {wineTitle(bottle.vintages)}
+            {bottle.quantity > 1 ? ` ×${bottle.quantity}` : ""}
+          </T>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <T variant="strong" color={phaseColor(theme, phase)}>{PHASE_LABELS[phase][locale]}</T>
             <T variant="data" color={theme.colors.textMuted}>{rec.drinkFrom}–{rec.drinkTo}</T>

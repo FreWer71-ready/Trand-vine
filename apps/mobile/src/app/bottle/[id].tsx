@@ -28,7 +28,7 @@ import {
 } from "../../components/ui.tsx";
 import {
   getBottle,
-  updateBottle,
+  takeBottle,
   wineHistory,
   wineRating,
   type BottleRow,
@@ -81,6 +81,7 @@ export default function BottleScreen() {
     <Screen>
       <Stack.Screen options={{ title: bottle.vintages.year ? String(bottle.vintages.year) : "NV" }} />
       <Title>{wineTitle(bottle.vintages)}</Title>
+      {inCellar && bottle.quantity > 1 && <T variant="strong">{t("bottlesLeft", { n: bottle.quantity })}</T>}
       <Body muted>
         {[wine.region, wine.country].filter(Boolean).join(", ")}
         {wine.grapes.length ? ` · ${wine.grapes.join(", ")}` : ""}
@@ -176,7 +177,7 @@ export default function BottleScreen() {
             title={t("markGivenAway")}
             variant="secondary"
             onPress={async () => {
-              await updateBottle(bottle.id, { status: "given_away", consumed_at: today() });
+              await takeBottle(bottle.id, { status: "given_away", consumed_at: today() });
               await load();
             }}
           />
@@ -186,7 +187,8 @@ export default function BottleScreen() {
         <ConsumeForm
           onCancel={() => setConsuming(false)}
           onSave={async (patch) => {
-            await updateBottle(bottle.id, { status: "consumed", ...patch });
+            // Med fler flaskor kvar ligger posten kvar i källaren med ett mindre antal.
+            await takeBottle(bottle.id, { status: "consumed", ...patch });
             setConsuming(false);
             await load();
           }}

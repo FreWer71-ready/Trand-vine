@@ -244,6 +244,60 @@ export function Chips<T extends string | number>({
   );
 }
 
+/** Antal med minus/plus, t.ex. hur många flaskor. */
+export function Stepper({
+  label,
+  value,
+  onChange,
+  min = 1,
+  max = 99,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+}) {
+  const theme = useTheme();
+  const c = theme.colors;
+  const step = (d: number) => onChange(Math.min(max, Math.max(min, value + d)));
+  const btn = (d: number, sign: string, name: string) => {
+    const disabled = d < 0 ? value <= min : value >= max;
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={name}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={() => step(d)}
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: theme.radius.chip,
+          borderWidth: 1,
+          borderColor: c.border,
+          backgroundColor: c.surface,
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: disabled ? 0.4 : 1,
+        }}
+      >
+        <Text style={{ color: c.text, fontSize: 24, fontFamily: theme.fonts.body.native }}>{sign}</Text>
+      </Pressable>
+    );
+  };
+  return (
+    <View style={{ gap: theme.space.xs }}>
+      <TLabel>{label}</TLabel>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: theme.space.md }}>
+        {btn(-1, "−", `${label} −1`)}
+        <T variant="title">{String(value)}</T>
+        {btn(1, "+", `${label} +1`)}
+      </View>
+    </View>
+  );
+}
+
 const TLabel = ({ children }: { children: ReactNode }) => <T variant="label">{children}</T>;
 
 export function Tags({ items }: { items: string[] }) {

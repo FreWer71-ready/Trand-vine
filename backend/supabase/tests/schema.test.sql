@@ -51,8 +51,8 @@ end $$;
 -- Flaska som gåva med betyg 5 → community-betyg (4*2 + 5) / 3 = 4.33
 insert into bottles (id, vintage_id, acquisition_type, gift_from, status, consumed_at, rating) values
   ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'gift', 'Mamma', 'consumed', '2025-12-24', 5);
-insert into bottles (vintage_id, acquisition_type, price, currency) values
-  ('20000000-0000-0000-0000-000000000001', 'purchase', 450, 'SEK');
+insert into bottles (id, vintage_id, acquisition_type, price, currency) values
+  ('30000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001', 'purchase', 450, 'SEK');
 
 do $$ begin
   assert (select avg_rating from vintages where id = '20000000-0000-0000-0000-000000000001') = 4.33, 'medelbetyg efter Annas betyg';
@@ -69,6 +69,35 @@ do $$ begin
   assert (select rating_count from vintages where id = '20000000-0000-0000-0000-000000000001') = 3, 'ingen dubbelräkning';
 end $$;
 
+-- Tre flaskor som en post; dricker en → posten har två kvar, den druckna blir egen rad
+insert into bottles (id, vintage_id, acquisition_type, price, currency, store, quantity) values
+  ('30000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000001', 'purchase', 300, 'SEK', 'Systembolaget', 3);
+do $$
+declare taken uuid;
+begin
+  taken := take_bottle('30000000-0000-0000-0000-000000000003', 'consumed', '2026-01-01', 'Bo', null, 3::smallint, null);
+  assert taken <> '30000000-0000-0000-0000-000000000003', 'ny rad för uttagen flaska';
+  assert (select quantity from bottles where id = '30000000-0000-0000-0000-000000000003') = 2, 'två kvar';
+  assert (select status from bottles where id = '30000000-0000-0000-0000-000000000003') = 'in_cellar', 'posten ligger kvar';
+  assert (select (status, quantity, store, consumed_with, rating) from bottles where id = taken)
+    = ('consumed'::bottle_status, 1, 'Systembolaget'::text, 'Bo'::text, 3::smallint), 'uttagen flaska';
+  perform take_bottle('30000000-0000-0000-0000-000000000003', 'given_away', '2026-01-02');
+  taken := take_bottle('30000000-0000-0000-0000-000000000003', 'consumed', '2026-01-03');
+  assert taken = '30000000-0000-0000-0000-000000000003', 'sista flaskan tar posten själv';
+  assert (select status from bottles where id = taken) = 'consumed', 'posten drucken';
+  assert (select count(*) from bottles where store = 'Systembolaget') = 3, 'tre rader i historiken';
+  begin
+    perform take_bottle('30000000-0000-0000-0000-000000000003', 'consumed', '2026-01-04');
+    raise exception 'borde nekas: tom post';
+  exception when no_data_found then null;
+  end;
+  begin
+    insert into bottles (vintage_id, acquisition_type, quantity) values ('20000000-0000-0000-0000-000000000001', 'purchase', 0);
+    raise exception 'borde nekas: antal 0';
+  exception when check_violation then null;
+  end;
+end $$;
+
 -- Som Bo: ser inte Annas flaskor eller betyg, men ser medelbetyget
 set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
 do $$ begin
@@ -79,6 +108,14 @@ do $$ begin
   assert (select count(*) from wine_barcodes where ean = '4006381333931') = 1, 'Bo får träff på Annas streckkod';
   update bottles set rating = 1;
   assert not found, 'Bo kan inte ändra Annas flaskor';
+  begin
+    perform take_bottle('30000000-0000-0000-0000-000000000002', 'consumed', '2026-01-01');
+    raise exception 'borde nekas: Bo tar Annas flaska';
+  exception when no_data_found then null;
+  end;
+  reset role;
+  assert (select status from bottles where id = '30000000-0000-0000-0000-000000000002') = 'in_cellar', 'Annas flaska orörd';
+  set role authenticated;
   begin
     insert into bottles (user_id, vintage_id, acquisition_type)
       values ('00000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-000000000001', 'purchase');
