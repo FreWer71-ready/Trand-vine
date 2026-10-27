@@ -58,16 +58,16 @@ export function T({
   const { fonts, type, colors } = theme;
   const styles: Record<Variant, TextStyle> = {
     display: { fontFamily: fonts.display.native, fontSize: type.display, lineHeight: type.display * 1.15 },
-    title: { fontFamily: fonts.display.native, fontSize: type.title, lineHeight: type.title * 1.2 },
-    heading: { fontFamily: fonts.heading.native, fontSize: type.heading, marginTop: theme.space.sm },
-    cardTitle: { fontFamily: fonts.heading.native, fontSize: type.body + 1 },
-    body: { fontFamily: fonts.body.native, fontSize: type.body, lineHeight: type.body * 1.4 },
-    strong: { fontFamily: fonts.bodyStrong.native, fontSize: type.body, lineHeight: type.body * 1.4 },
-    muted: { fontFamily: fonts.body.native, fontSize: type.small, lineHeight: type.small * 1.4, color: colors.textMuted },
+    title: { fontFamily: fonts.display.native, fontSize: type.title, lineHeight: type.title * 1.25, color: colors.navActive },
+    heading: { fontFamily: fonts.heading.native, fontSize: type.heading, lineHeight: type.heading * 1.25, marginTop: theme.space.lg, paddingBottom: theme.space.xs, borderBottomWidth: 1, borderBottomColor: colors.accent },
+    cardTitle: { fontFamily: fonts.heading.native, fontSize: type.heading, lineHeight: type.heading * 1.25 },
+    body: { fontFamily: fonts.body.native, fontSize: type.body, lineHeight: type.body * 1.5 },
+    strong: { fontFamily: fonts.bodyStrong.native, fontSize: type.body, lineHeight: type.body * 1.5 },
+    muted: { fontFamily: fonts.body.native, fontSize: type.small, lineHeight: type.small * 1.45, color: colors.textMuted },
     label: {
       fontFamily: fonts.label.native,
       fontSize: type.label,
-      color: colors.textMuted,
+      color: colors.accent,
       letterSpacing: theme.label.letterSpacing,
       textTransform: theme.label.uppercase ? "uppercase" : "none",
     },
@@ -92,10 +92,10 @@ export function Card({ children, onPress, highlight }: { children: ReactNode; on
   const style = {
     backgroundColor: highlight ? c.highlight : c.surface,
     borderRadius: theme.radius.card,
-    borderWidth: 1,
+    borderWidth: highlight ? 2 : 1,
     borderColor: highlight ? c.accent : c.border,
-    padding: theme.space.lg - 2,
-    gap: theme.space.xs,
+    padding: theme.space.lg,
+    gap: theme.space.sm,
   };
   return onPress ? (
     <Pressable onPress={onPress} style={({ pressed }) => [style, pressed && { opacity: 0.75 }]}>
@@ -144,7 +144,7 @@ export function Button({
       onPressOut={() => setPressed(false)}
       disabled={inactive}
       style={{
-        minHeight: 50,
+        minHeight: 52,
         borderRadius: theme.radius.button,
         alignItems: "center",
         justifyContent: "center",
@@ -163,7 +163,7 @@ export function Button({
           style={{
             color: fg,
             fontFamily: theme.fonts[b.font].native,
-            fontSize: b.uppercase ? 14 : 17,
+            fontSize: b.uppercase ? 15 : 17,
             letterSpacing: b.letterSpacing,
             textTransform: b.uppercase ? "uppercase" : "none",
           }}
@@ -184,10 +184,10 @@ export function Field({ label, ...props }: TextInputProps & { label: string }) {
       <TextInput
         placeholderTextColor={c.textMuted}
         style={{
-          borderWidth: 1,
+          borderWidth: 1.5,
           borderColor: c.border,
           borderRadius: theme.radius.field,
-          padding: theme.space.md,
+          padding: theme.space.md + 2,
           fontSize: theme.type.body,
           fontFamily: theme.fonts.body.native,
           backgroundColor: c.surface,
@@ -229,7 +229,7 @@ export function Chips<T extends string | number>({
                 borderColor: selected ? c.primary : c.border,
                 borderRadius: theme.radius.chip,
                 paddingHorizontal: theme.space.md,
-                paddingVertical: 7,
+                paddingVertical: 9,
                 backgroundColor: selected ? c.primary : c.surface,
               }}
             >
