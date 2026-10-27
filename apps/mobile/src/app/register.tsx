@@ -20,26 +20,36 @@ import {
   linkBarcode,
   searchExternal,
   searchWines,
+  systembolagetOffers,
   wineHistory,
   type HistoryRow,
   type ScanResult,
+  type SystembolagetOffer,
   type WineRow,
 } from "../lib/api.ts";
 import { isIsoDate, today } from "../lib/format.ts";
 import { deviceCurrency, useLocale, useT } from "../lib/i18n.tsx";
-import { getPendingScan } from "../lib/scanStore.ts";
+import { loadLastChoices, saveLastChoices } from "../lib/prefs.ts";
+import { getAddAgain, getPendingScan, type AddAgain } from "../lib/scanStore.ts";
 
-/** Valt vin: antingen befintligt i registret eller nytt från källa/manuellt. */
-type Choice = { kind: "existing"; wine: WineRow } | { kind: "new"; candidate: WineCandidate };
+/**
+ * Valt vin: antingen befintligt i registret (med Systembolagets pris m.m. om
+ * vinet finns där) eller nytt från källa/manuellt.
+ */
+type Choice =
+  | { kind: "existing"; wine: WineRow; offer?: SystembolagetOffer }
+  | { kind: "new"; candidate: WineCandidate };
 
-const SIZES = [375, 750, 1500, 3000];
+const SIZES = [375, 500, 750, 1500, 3000];
 const COLORS: WineColor[] = ["red", "white", "rose", "sparkling", "dessert", "fortified"];
 const ACQUISITIONS: AcquisitionType[] = ["purchase", "gift", "tasting", "inheritance", "trade", "other"];
 
 export default function Register() {
   const t = useT();
   const [scan] = useState<ScanResult | null>(() => getPendingScan());
-  const [choice, setChoice] = useState<Choice | null>(null);
+  // "Lägg till igen" från en flaska: vinet är redan valt.
+  const [again] = useState<AddAgain | null>(() => getAddAgain());
+  const [choice, setChoice] = useState<Choice | null>(() => (again ? { kind: "existing", wine: again.wine } : null));
 
   // Känt vin från streckkoden → hoppa direkt till detaljer.
   useEffect(() => {
@@ -51,7 +61,17 @@ export default function Register() {
   if (!choice) {
     return <ChooseWine scan={scan} onChoose={setChoice} />;
   }
-  return <BottleDetails scan={scan} choice={choice} onBack={scan?.status === "known" ? undefined : () => setChoice(null)} t={t} />;
+  const preset = again && choice.kind === "existing" && choice.wine.id === again.wine.id ? again : null;
+  return (
+    <BottleDetails
+      key={choice.kind === "existing" ? choice.wine.id : choice.candidate.name}
+      scan={scan}
+      choice={choice}
+      preset={preset}
+      onBack={scan?.status === "known" ? undefined : () => setChoice(null)}
+      t={t}
+    />
+  );
 }
 
 function ChooseWine({ scan, onChoose }: { scan: ScanResult | null; onChoose: (c: Choice) => void }) {
@@ -59,6 +79,7 @@ function ChooseWine({ scan, onChoose }: { scan: ScanResult | null; onChoose: (c:
   const locale = useLocale();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<WineRow[]>([]);
+  const [offers, setOffers] = useState<Map<string, SystembolagetOffer>>(new Map());
   const [external, setExternal] = useState<WineCandidate[]>([]);
   // Vilken sökning resultaten hör till, så att svar på gamla sökord ignoreras.
   const [searched, setSearched] = useState("");
@@ -83,6 +104,8 @@ function ChooseWine({ scan, onChoose }: { scan: ScanResult | null; onChoose: (c:
       const own = await searchWines(q).catch(() => []);
       if (cancelled) return;
       setResults(own);
+      setOffers(await systembolagetOffers(own).catch(() => new Map()));
+      if (cancelled) return;
       const more = own.length < 3 ? await searchExternal(q).catch(() => []) : [];
       if (cancelled) return;
       setExternal(more);
@@ -126,11 +149,20 @@ function ChooseWine({ scan, onChoose }: { scan: ScanResult | null; onChoose: (c:
         />
       ))}
 
-      <Field label={t("search")} value={query} onChangeText={setQuery} autoCorrect={false} />
+      <Field label={t("search")} placeholder={t("searchPlaceholder")} value={query} onChangeText={setQuery} autoCorrect={false} />
       {searching && <T variant="muted">{t("searching")}</T>}
-      {results.map((w) => (
-        <WineCard key={w.id} title={[w.producer, w.name].filter(Boolean).join(" – ")} subtitle={[w.region, w.country].filter(Boolean).join(", ")} onPress={() => onChoose({ kind: "existing", wine: w })} />
-      ))}
+      {results.map((w) => {
+        const o = offers.get(w.id);
+        const sb = o && [t("systembolagetNr", { nr: o.short_number }), o.vintage, o.price !== null ? `${o.price} kr` : null].filter(Boolean).join(" · ");
+        return (
+          <WineCard
+            key={w.id}
+            title={[w.producer, w.name].filter(Boolean).join(" – ")}
+            subtitle={[[w.region, w.country].filter(Boolean).join(", "), sb].filter(Boolean).join("\n")}
+            onPress={() => onChoose({ kind: "existing", wine: w, offer: o })}
+          />
+        );
+      })}
       {external.length > 0 && <T variant="label">{t("fromOpenFoodFacts")}</T>}
       {external.map((c) => (
         <WineCard
@@ -186,39 +218,68 @@ function WineCard({ title, subtitle, onPress }: { title: string; subtitle?: stri
   );
 }
 
+function sizeLabel(ml: number, locale: string) {
+  return (ml >= 1000 ? `${ml / 1000} l` : `${ml / 10} cl`).replace(".", locale === "sv" ? "," : ".");
+}
+
 function BottleDetails({
   scan,
   choice,
+  preset,
   onBack,
   t,
 }: {
   scan: ScanResult | null;
   choice: Choice;
+  preset: AddAgain | null;
   onBack?: () => void;
   t: ReturnType<typeof useT>;
 }) {
   const locale = useLocale();
   const candidate = choice.kind === "new" ? choice.candidate : null;
+  const offer = choice.kind === "existing" ? choice.offer : undefined;
   const title =
     choice.kind === "existing"
       ? [choice.wine.producer, choice.wine.name].filter(Boolean).join(" – ")
       : [candidate!.producer, candidate!.name].filter(Boolean).join(" – ");
 
   const [history, setHistory] = useState<HistoryRow[]>([]);
-  const [year, setYear] = useState(candidate?.vintage ? String(candidate.vintage) : "");
-  const [nonVintage, setNonVintage] = useState(false);
-  const [size, setSize] = useState(candidate?.bottleSizeMl && SIZES.includes(candidate.bottleSizeMl) ? candidate.bottleSizeMl : 750);
+  // Förifyllt i första hand från flaskan som läggs till igen, sedan från
+  // Systembolaget och sist från streckkodskällan.
+  const startYear = preset ? preset.year : (offer?.vintage ?? candidate?.vintage ?? null);
+  const startSize = [preset?.sizeMl, offer?.volume_ml, candidate?.bottleSizeMl].find((s) => s && SIZES.includes(s)) ?? 750;
+  const [year, setYear] = useState(startYear ? String(startYear) : "");
+  const [nonVintage, setNonVintage] = useState(!!preset && preset.year === null);
+  const [size, setSize] = useState(startSize);
   const [quantity, setQuantity] = useState(1);
   const [acq, setAcq] = useState<AcquisitionType>("purchase");
   const [date, setDate] = useState(today());
-  const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState(deviceCurrency());
-  const [store, setStore] = useState("");
+  const [price, setPrice] = useState(offer?.price != null ? String(offer.price) : "");
+  const [currency, setCurrency] = useState(offer ? "SEK" : deviceCurrency());
+  const [store, setStore] = useState(offer ? "Systembolaget" : "");
   const [giftFrom, setGiftFrom] = useState("");
   const [occasion, setOccasion] = useState("");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(preset?.location ?? "");
+  const [more, setMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Senaste valen (köp/gåva, butik, valuta, plats). Ett vin från Systembolaget
+  // behåller sin butik och sitt pris.
+  useEffect(() => {
+    let cancelled = false;
+    loadLastChoices().then((last) => {
+      if (cancelled) return;
+      if (last.location && !preset?.location) setLocation(last.location);
+      if (offer) return;
+      if (last.acquisition) setAcq(last.acquisition);
+      if (last.store) setStore(last.store);
+      if (last.currency) setCurrency(last.currency);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [offer, preset]);
 
   // "Du har haft detta vin förut" – endast för vin som redan finns i registret.
   useEffect(() => {
@@ -229,6 +290,15 @@ function BottleDetails({
   const yearValid = nonVintage || (/^\d{4}$/.test(year) && yearNum >= 1800 && yearNum <= new Date().getFullYear());
   const priceNum = price ? Number(price.replace(",", ".")) : null;
   const valid = yearValid && isIsoDate(date) && (priceNum === null || priceNum >= 0);
+  // Fälten under "Fler uppgifter" visas alltid om något där är fel.
+  const showMore = more || !isIsoDate(date) || !(priceNum === null || priceNum >= 0);
+  const summary = [
+    sizeLabel(size, locale),
+    date === today() ? t("today") : date,
+    acq === "purchase" && priceNum !== null ? `${price} ${currency}` : null,
+    acq === "purchase" ? store.trim() || null : null,
+    location.trim() || null,
+  ].filter(Boolean).join(" · ");
 
   async function save() {
     setBusy(true);
@@ -252,6 +322,7 @@ function BottleDetails({
         occasion_note: occasion.trim() || null,
         location: location.trim() || null,
       });
+      await saveLastChoices({ acquisition: acq, store: store.trim(), currency: currency.toUpperCase().slice(0, 3), location: location.trim() });
       router.replace(`/bottle/${id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("error"));
@@ -281,24 +352,34 @@ function BottleDetails({
 
       <Chips label={t("vintage")} value={nonVintage ? 1 : 0} onChange={(v) => setNonVintage(v === 1)} options={[{ value: 0, label: t("vintage") }, { value: 1, label: t("nonVintage") }]} />
       {!nonVintage && <Field label={t("vintage")} value={year} onChangeText={setYear} keyboardType="number-pad" maxLength={4} placeholder="2018" />}
-      <Body muted>{t("vintageHelp")}</Body>
+      {!yearValid && <Body muted>{t("vintageHelp")}</Body>}
 
-      <Chips label={t("size")} value={size} onChange={setSize} options={SIZES.map((s) => ({ value: s, label: (s >= 1000 ? `${s / 1000} l` : `${s / 10} cl`).replace(".", locale === "sv" ? "," : ".") }))} />
       <Stepper label={t("quantity")} value={quantity} onChange={setQuantity} />
 
       <Heading>{t("howAcquired")}</Heading>
       <Chips value={acq} onChange={setAcq} options={ACQUISITIONS.map((a) => ({ value: a, label: ACQUISITION_LABELS[a][locale] }))} />
-      <Field label={t("date")} value={date} onChangeText={setDate} maxLength={10} />
-      {acq === "purchase" && (
-        <>
-          <Field label={quantity > 1 ? t("pricePerBottle") : t("price")} value={price} onChangeText={setPrice} keyboardType="decimal-pad" />
-          <Field label={t("currency")} value={currency} onChangeText={setCurrency} autoCapitalize="characters" maxLength={3} />
-          <Field label={t("store")} value={store} onChangeText={setStore} />
-        </>
-      )}
       {acq === "gift" && <Field label={t("giftFrom")} value={giftFrom} onChangeText={setGiftFrom} />}
-      <Field label={acq === "gift" ? t("occasion") : t("note")} value={occasion} onChangeText={setOccasion} />
-      <Field label={t("location")} value={location} onChangeText={setLocation} />
+
+      {showMore ? (
+        <>
+          <Chips label={t("size")} value={size} onChange={setSize} options={SIZES.map((s) => ({ value: s, label: sizeLabel(s, locale) }))} />
+          <Field label={t("date")} value={date} onChangeText={setDate} maxLength={10} />
+          {acq === "purchase" && (
+            <>
+              <Field label={quantity > 1 ? t("pricePerBottle") : t("price")} value={price} onChangeText={setPrice} keyboardType="decimal-pad" />
+              <Field label={t("currency")} value={currency} onChangeText={setCurrency} autoCapitalize="characters" maxLength={3} />
+              <Field label={t("store")} value={store} onChangeText={setStore} />
+            </>
+          )}
+          <Field label={acq === "gift" ? t("occasion") : t("note")} value={occasion} onChangeText={setOccasion} />
+          <Field label={t("location")} value={location} onChangeText={setLocation} />
+        </>
+      ) : (
+        <Card onPress={() => setMore(true)}>
+          <T variant="muted">{summary}</T>
+          <T variant="strong">{t("moreDetails")}</T>
+        </Card>
+      )}
 
       <ErrorText>{error ?? (!yearValid ? t("needYear") : !isIsoDate(date) ? t("needDate") : !valid ? t("needPrice") : null)}</ErrorText>
       <Button title={quantity > 1 ? t("addBottles", { n: quantity }) : t("addBottle")} onPress={save} loading={busy} disabled={!valid} />

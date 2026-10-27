@@ -5,6 +5,7 @@
 // (skapas med SQL av den som har databasåtkomst, giltig i en timme):
 //   { "action": "list" }                       → filerna i mappen
 //   { "action": "wines", "fileId": "…", "skip": 0 } → importerar vinfilen
+//   { "action": "systembolaget", "url": "…" }   → Systembolagets sortiment (JSON)
 // Räcker inte en körning (funktionerna har begränsad datorkraft) svarar den
 // med var den slutade; kör igen med "skip" satt till det värdet.
 //
@@ -14,6 +15,11 @@
 import { CsvParseStream } from "jsr:@std/csv@1/parse-stream";
 import postgres from "npm:postgres@3.4.5";
 import { mapWine, type XWinesWine } from "../../../../packages/importers/src/xwinesMap.ts";
+import { mapSystembolagetAll } from "../../../../packages/importers/src/systembolagetMap.ts";
+
+// Spegel av Systembolagets sortiment (det officiella API:t är nedlagt).
+const SYSTEMBOLAGET_URL =
+  "https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json";
 
 const FOLDER_ID = "1LqguJNV-aKh1PuWMVx5ELA61LPfGfuu_";
 const BATCH = 2000;
@@ -102,6 +108,16 @@ async function importWines(fileId: string, skip: number) {
   return { wines: count + batch.length, next: null };
 }
 
+async function importSystembolaget(url: string) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Systembolaget-datan svarade ${res.status}`);
+  const wines = mapSystembolagetAll(await res.json());
+  for (let i = 0; i < wines.length; i += BATCH) {
+    await sql`select private.import_systembolaget((${JSON.stringify(wines.slice(i, i + BATCH))}::text)::jsonb)`;
+  }
+  return { wines: wines.length };
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   const token = req.headers.get("x-import-token") ?? "";
@@ -116,6 +132,11 @@ Deno.serve(async (req) => {
     if (body.action === "wines" && typeof body.fileId === "string") {
       const skip = Number.isInteger(body.skip) && body.skip > 0 ? body.skip : 0;
       const result = await importWines(body.fileId, skip);
+      return json({ ...result, seconds: Math.round((Date.now() - started) / 1000) });
+    }
+    if (body.action === "systembolaget") {
+      const url = typeof body.url === "string" && body.url.startsWith("https://") ? body.url : SYSTEMBOLAGET_URL;
+      const result = await importSystembolaget(url);
       return json({ ...result, seconds: Math.round((Date.now() - started) / 1000) });
     }
     return json({ error: "unknown_action" }, 400);

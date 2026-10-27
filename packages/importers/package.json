@@ -7,7 +7,8 @@
     "test": "vitest run",
     "typecheck": "tsc -p .",
     "xwines": "tsx src/cli.ts xwines",
-    "lwin": "tsx src/cli.ts lwin"
+    "lwin": "tsx src/cli.ts lwin",
+    "systembolaget": "tsx src/cli.ts systembolaget"
   },
   "dependencies": {
     "@trand-vine/core": "*",

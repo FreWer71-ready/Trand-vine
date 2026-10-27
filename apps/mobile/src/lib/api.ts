@@ -24,6 +24,7 @@ export interface WineRow {
   abv: number | null;
   food_pairings: FoodKey[];
   image_url: string | null;
+  systembolaget_nr: string | null;
 }
 
 export interface VintageRow {
@@ -94,9 +95,37 @@ export async function getWine(id: string): Promise<WineRow> {
   return check(await supabase.from("wines").select("*").eq("id", id).single()) as WineRow;
 }
 
+/**
+ * Gör om en inklistrad länk från systembolaget.se till artikelnumret, t.ex.
+ * ".../produkt/vin/amarone-5570901/" → "5570901". Annan text lämnas orörd.
+ */
+export function searchTerm(q: string): string {
+  const url = q.match(/systembolaget\.se\/\S*?(\d{5,9})\/?(?:[?#]\S*)?$/i);
+  return url ? url[1]! : q.trim();
+}
+
 export async function searchWines(q: string): Promise<WineRow[]> {
-  if (q.trim().length < 2) return [];
-  return (check(await supabase.rpc("search_wines", { q, max_results: 20 })) ?? []) as WineRow[];
+  const term = searchTerm(q);
+  if (term.length < 2) return [];
+  return (check(await supabase.rpc("search_wines", { q: term, max_results: 20 })) ?? []) as WineRow[];
+}
+
+export interface SystembolagetOffer {
+  wine_id: string;
+  short_number: string;
+  vintage: number | null;
+  volume_ml: number | null;
+  price: number | null;
+}
+
+/** Systembolagets nummer, pris, storlek och årgång för vinerna som har sådana. */
+export async function systembolagetOffers(wines: WineRow[]): Promise<Map<string, SystembolagetOffer>> {
+  const ids = wines.filter((w) => w.systembolaget_nr).map((w) => w.id);
+  if (!ids.length) return new Map();
+  const rows = check(
+    await supabase.from("systembolaget_products").select("wine_id, short_number, vintage, volume_ml, price").in("wine_id", ids),
+  ) as SystembolagetOffer[];
+  return new Map(rows.map((r) => [r.wine_id, r]));
 }
 
 // Reserv när registret saknar vinet. Körs från klienten så att varje

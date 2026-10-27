@@ -1,0 +1,154 @@
+[
+ {
+  "productNumber": "5570901",
+  "productNumberShort": "55709",
+  "productNameBold": "Amarone",
+  "productNameThin": "della Valpolicella",
+  "producerName": "Ca' Del Sette",
+  "categoryLevel1": "Vin",
+  "categoryLevel2": "Rött vin",
+  "categoryLevel3": null,
+  "country": "Italien",
+  "originLevel1": "Venetien",
+  "originLevel2": null,
+  "grapes": [
+   "Corvina",
+   "Rondinella",
+   "Corvinone"
+  ],
+  "alcoholPercentage": 15.5,
+  "vintage": "2018",
+  "volume": 750,
+  "price": 428,
+  "tasteSymbols": [
+   "Lamm",
+   "Nöt",
+   "Vilt"
+  ],
+  "images": [],
+  "isDiscontinued": false
+ },
+ {
+  "productNumber": "7243102",
+  "productNumberShort": "72431",
+  "productNameBold": "Alasia",
+  "productNameThin": "Commandaria",
+  "producerName": "LOEL Viomichanoi Ltd",
+  "categoryLevel1": "Vin",
+  "categoryLevel2": "Vitt vin",
+  "categoryLevel3": "Sött",
+  "country": "Cypern",
+  "originLevel1": "Commandaria",
+  "originLevel2": null,
+  "grapes": [],
+  "alcoholPercentage": 15,
+  "vintage": "2019",
+  "volume": 500,
+  "price": 253,
+  "tasteSymbols": [],
+  "images": [
+   {
+    "fileType": null,
+    "imageUrl": "https://product-cdn.systembolaget.se/productimages/41940738/41940738",
+    "size": null
+   }
+  ],
+  "isDiscontinued": false
+ },
+ {
+  "productNumber": "7082801",
+  "productNumberShort": "70828",
+  "productNameBold": ".Collection Secrète",
+  "productNameThin": null,
+  "producerName": "Elodie D.",
+  "categoryLevel1": "Vin",
+  "categoryLevel2": "Mousserande vin",
+  "categoryLevel3": "Torrt vitt",
+  "country": "Frankrike",
+  "originLevel1": "Champagne",
+  "originLevel2": null,
+  "grapes": [
+   "Pinot noir"
+  ],
+  "alcoholPercentage": 12,
+  "vintage": "1996",
+  "volume": 750,
+  "price": 1199,
+  "tasteSymbols": [],
+  "images": [],
+  "isDiscontinued": false
+ },
+ {
+  "productNumber": "3245415",
+  "productNumberShort": "32454",
+  "productNameBold": " Två Feta Grisar",
+  "productNameThin": "Ingvor",
+  "producerName": "Två Feta Grisar",
+  "categoryLevel1": "Öl",
+  "categoryLevel2": "Syrlig öl",
+  "categoryLevel3": "Övrig syrlig öl",
+  "country": "Sverige",
+  "originLevel1": "Västra Götalands län",
+  "originLevel2": "Göteborgs stad",
+  "grapes": [],
+  "alcoholPercentage": 5.4,
+  "vintage": null,
+  "volume": 330,
+  "price": 30.9,
+  "tasteSymbols": [
+   "Sällskapsdryck"
+  ],
+  "images": [],
+  "isDiscontinued": false
+ },
+ {
+  "productNumber": "7318509",
+  "productNumberShort": "73185",
+  "productNameBold": " Podere Pradarolo Blandlåda",
+  "productNameThin": "Vitt och mousserande vin",
+  "producerName": "Podere Pradarolo",
+  "categoryLevel1": "Vin",
+  "categoryLevel2": "Vinlåda",
+  "categoryLevel3": null,
+  "country": "Italien",
+  "originLevel1": "Emilia-Romagna",
+  "originLevel2": null,
+  "grapes": [],
+  "alcoholPercentage": 13,
+  "vintage": null,
+  "volume": 2250,
+  "price": 1086,
+  "tasteSymbols": [],
+  "images": [],
+  "isDiscontinued": false
+ },
+ {
+  "productNumber": "5570901",
+  "productNumberShort": "55709",
+  "productNameBold": "Amarone",
+  "productNameThin": "della Valpolicella",
+  "producerName": "Ca' Del Sette",
+  "categoryLevel1": "Vin",
+  "categoryLevel2": "Rött vin",
+  "categoryLevel3": null,
+  "country": "Italien",
+  "originLevel1": "Venetien",
+  "originLevel2": null,
+  "grapes": [
+   "Corvina",
+   "Rondinella",
+   "Corvinone"
+  ],
+  "alcoholPercentage": 15.5,
+  "vintage": "2018",
+  "volume": 750,
+  "price": 999,
+  "tasteSymbols": [
+   "Lamm",
+   "Nöt",
+   "Vilt"
+  ],
+  "images": [],
+  "isDiscontinued": false
+ }
+]

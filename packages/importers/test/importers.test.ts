@@ -1,8 +1,9 @@
-import { createReadStream } from "node:fs";
+import { createReadStream, readFileSync } from "node:fs";
 import { Readable } from "node:stream";
 import { describe, expect, it } from "vitest";
 import { mapLwinRow, writeLwinSql } from "../src/lwin.ts";
 import { csvField, pgArray } from "../src/sql.ts";
+import { mapSystembolaget, mapSystembolagetAll, writeSystembolagetSql } from "../src/systembolaget.ts";
 import { aggregateRatings, mapWine, parsePyList, writeXWinesSql } from "../src/xwines.ts";
 
 const fixture = (name: string) => new URL(`./fixtures/${name}`, import.meta.url).pathname;
@@ -80,5 +81,29 @@ describe("LWIN", () => {
 
   it("fails clearly when columns are missing", async () => {
     await expect(writeLwinSql(Readable.from(["foo,bar\n1,2\n"]), collect())).rejects.toThrow(/saknar kolumner: LWIN/);
+  });
+});
+
+describe("Systembolaget", () => {
+  const products = JSON.parse(readFileSync(fixture("systembolaget_sample.json"), "utf8"));
+
+  it("maps wines and skips beer and wine boxes", () => {
+    const wines = mapSystembolagetAll(products);
+    expect(wines.map((w) => w.productNumber)).toEqual(["5570901", "7243102", "7082801"]);
+    expect(wines[0]).toMatchObject({
+      shortNumber: "55709", name: "Amarone della Valpolicella", country: "Italy", color: "red",
+      vintage: 2018, volumeMl: 750, food: ["lamb", "red_meat", "game"],
+      price: 999, // dubbletten med samma nummer vinner
+    });
+    expect(wines[1]).toMatchObject({ color: "dessert", country: "Cyprus" });
+    expect(wines[2]).toMatchObject({ name: ".Collection Secrète", color: "sparkling" });
+    expect(mapSystembolaget({ categoryLevel1: "Vin", categoryLevel2: "Rött vin", productNumber: "1" })).toBeNull();
+  });
+
+  it("writes SQL calling the import function", () => {
+    const out = collect();
+    const res = writeSystembolagetSql(products, out);
+    expect(res.wines).toBe(3);
+    expect(out.text).toMatch(/select private\.import_systembolaget\(\$sb\$\[.*\]\$sb\$::jsonb\);/);
   });
 });
