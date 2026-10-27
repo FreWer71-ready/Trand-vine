@@ -25,7 +25,7 @@ import {
 } from "../lib/api.ts";
 import { isIsoDate, today } from "../lib/format.ts";
 import { deviceCurrency, useLocale, useT } from "../lib/i18n.tsx";
-import { takePendingScan } from "../lib/scanStore.ts";
+import { getPendingScan } from "../lib/scanStore.ts";
 
 /** Valt vin: antingen befintligt i registret eller nytt från källa/manuellt. */
 type Choice = { kind: "existing"; wine: WineRow } | { kind: "new"; candidate: WineCandidate };
@@ -36,7 +36,7 @@ const ACQUISITIONS: AcquisitionType[] = ["purchase", "gift", "tasting", "inherit
 
 export default function Register() {
   const t = useT();
-  const [scan] = useState<ScanResult | null>(() => takePendingScan());
+  const [scan] = useState<ScanResult | null>(() => getPendingScan());
   const [choice, setChoice] = useState<Choice | null>(null);
 
   // Känt vin från streckkoden → hoppa direkt till detaljer.

@@ -4,10 +4,10 @@ import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "ex
 import { router, useIsFocused } from "expo-router";
 import { useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { Body, Button, ErrorText, Loading, Screen } from "../../components/ui.tsx";
+import { Body, Button, ErrorText, Field, Loading, Screen, T } from "../../components/ui.tsx";
 import { lookupBarcode } from "../../lib/api.ts";
 import { useT } from "../../lib/i18n.tsx";
-import { setPendingScan } from "../../lib/scanStore.ts";
+import { openManualAdd, setPendingScan } from "../../lib/scanStore.ts";
 import { useTheme } from "../../lib/theme.tsx";
 
 export default function Scan() {
@@ -17,16 +17,18 @@ export default function Scan() {
   const [permission, requestPermission] = useCameraPermissions();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [typed, setTyped] = useState("");
   // Kameran rapporterar samma kod många gånger per sekund.
   const handling = useRef(false);
 
-  async function onScanned({ data }: BarcodeScanningResult) {
+  async function lookUp(code: string) {
     if (handling.current) return;
     handling.current = true;
     setBusy(true);
     setError(null);
     try {
-      setPendingScan(await lookupBarcode(data));
+      setPendingScan(await lookupBarcode(code));
+      setTyped("");
       router.push("/register");
     } catch {
       setError(t("lookupFailed"));
@@ -37,10 +39,26 @@ export default function Scan() {
     }
   }
 
-  function searchInstead() {
-    setPendingScan(null);
-    router.push("/register");
-  }
+  const onScanned = ({ data }: BarcodeScanningResult) => void lookUp(data);
+
+  // Alternativ när kameran inte går att använda: skriv streckkoden eller lägg till för hand.
+  const fallback = (
+    <>
+      <Field
+        label={t("typeBarcode")}
+        value={typed}
+        onChangeText={(v) => setTyped(v.replace(/[^\d\s-]/g, ""))}
+        keyboardType="number-pad"
+        inputMode="numeric"
+        maxLength={20}
+        onSubmitEditing={() => typed.trim() && void lookUp(typed)}
+      />
+      <Button title={t("lookUpBarcode")} onPress={() => void lookUp(typed)} loading={busy} disabled={typed.replace(/\D/g, "").length < 8} />
+      <ErrorText>{error}</ErrorText>
+      <T variant="muted">{t("orAddManually")}</T>
+      <Button title={t("addManual")} variant="secondary" onPress={openManualAdd} />
+    </>
+  );
 
   if (!permission) return <Loading />;
   if (!permission.granted) {
@@ -48,7 +66,7 @@ export default function Scan() {
       <Screen>
         <Body>{t("cameraPermission")}</Body>
         <Button title={t("allowCamera")} onPress={requestPermission} />
-        <Button title={t("searchInstead")} variant="secondary" onPress={searchInstead} />
+        {fallback}
       </Screen>
     );
   }
@@ -68,10 +86,7 @@ export default function Scan() {
         <Text style={[styles.hint, { fontFamily: theme.fonts.heading.native }]}>{busy ? t("lookingUp") : t("pointAtBarcode")}</Text>
         {busy && <ActivityIndicator color="#fff" />}
       </View>
-      <View style={[styles.bottom, { backgroundColor: theme.colors.background }]}>
-        <ErrorText>{error}</ErrorText>
-        <Button title={t("searchInstead")} variant="secondary" onPress={searchInstead} />
-      </View>
+      <View style={[styles.bottom, { backgroundColor: theme.colors.background }]}>{fallback}</View>
     </View>
   );
 }

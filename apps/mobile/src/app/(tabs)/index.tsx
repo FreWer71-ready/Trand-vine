@@ -7,6 +7,7 @@ import { View } from "react-native";
 import { Body, Button, Card, Chips, ErrorText, Loading, Screen, T, phaseColor } from "../../components/ui.tsx";
 import { listBottles, type BottleRow } from "../../lib/api.ts";
 import { sortByUrgency, wineTitle } from "../../lib/format.ts";
+import { openManualAdd } from "../../lib/scanStore.ts";
 import { useLocale, useT } from "../../lib/i18n.tsx";
 import { useTheme } from "../../lib/theme.tsx";
 
@@ -31,6 +32,7 @@ export default function Cellar() {
       <Screen>
         <Body>{t("emptyCellar")}</Body>
         <Button title={t("scan")} onPress={() => router.navigate("/scan")} />
+        <Button title={t("addManual")} variant="secondary" onPress={openManualAdd} />
       </Screen>
     );
   }
@@ -40,6 +42,7 @@ export default function Cellar() {
 
   return (
     <Screen>
+      <Button title={t("addBottleShort")} variant="secondary" onPress={openManualAdd} />
       {present.length > 1 && (
         <Chips
           value={color}
