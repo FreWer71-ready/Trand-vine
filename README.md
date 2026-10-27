@@ -65,6 +65,24 @@ För att slå på inloggning med e-postkod igen: sätt `EXPO_PUBLIC_LOGIN_ENABLE
 
 ### 2. Importera vindata (valfritt men rekommenderat)
 
+**Viner direkt i Supabase:** funktionen `import-xwines` laddar ner vinfilen från
+X-Wines Google Drive och importerar den, utan att något laddas ner lokalt. Den
+startas från databasen (SQL-editorn) med en engångsnyckel:
+
+```sql
+with t as (insert into private.import_tokens default values returning token)
+select net.http_post(
+  url := 'https://<projekt>.supabase.co/functions/v1/import-xwines',
+  body := '{"action":"wines","fileId":"1uEEipmKNxdiKUAhjH-K14JOSQ2BLRFss"}'::jsonb,
+  headers := jsonb_build_object('Content-Type','application/json','x-import-token',(select token from t)),
+  timeout_milliseconds := 400000);
+-- Svaret: select * from net._http_response order by id desc limit 1;
+-- Svarar den med "next": kör igen med "skip": <next>.
+```
+
+Betygen (21 miljoner rader) är för stora för en funktionskörning; de importeras
+med GitHub-flödet nedan.
+
 **Enklast: GitHub Action.** Lägg Supabase-adressen som hemlighet `SUPABASE_DB_URL`
 (Supabase → Project Settings → Database → Connection string → **Session pooler**)
 under GitHub → Settings → Secrets and variables → Actions. Kör sedan

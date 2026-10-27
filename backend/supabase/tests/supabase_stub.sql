@@ -4,6 +4,7 @@ create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin bypassrls;
 create schema extensions;
+create extension pgcrypto with schema extensions; -- förinstallerat i Supabase
 
 create schema auth;
 create table auth.users (

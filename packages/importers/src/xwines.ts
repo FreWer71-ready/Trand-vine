@@ -6,99 +6,10 @@
 
 import { parse } from "csv-parse";
 import type { Readable } from "node:stream";
-import type { FoodKey, WineColor } from "@trand-vine/core";
+import { mapWine } from "./xwinesMap.ts";
 import { csvRow, pgArray, type Writer } from "./sql.ts";
 
-const COLORS: Record<string, WineColor> = {
-  Red: "red",
-  White: "white",
-  "Rosé": "rose",
-  Sparkling: "sparkling",
-  Dessert: "dessert",
-  "Dessert/Port": "fortified",
-};
-
-const FOODS: Record<string, FoodKey> = {
-  Aperitif: "aperitif_snacks",
-  Appetizer: "aperitif_snacks",
-  Snack: "aperitif_snacks",
-  Barbecue: "bbq",
-  Grilled: "bbq",
-  Beef: "red_meat",
-  Veal: "red_meat",
-  Lamb: "lamb",
-  "Game Meat": "game",
-  "Light Stews": "beef_stew",
-  Pork: "pork",
-  Chicken: "poultry",
-  Poultry: "poultry",
-  Fish: "fish",
-  "Lean Fish": "fish",
-  "Rich Fish": "salmon",
-  Seafood: "shellfish",
-  Shellfish: "shellfish",
-  Pasta: "pasta_tomato",
-  "Tomato Dishes": "pasta_tomato",
-  Pizza: "pizza",
-  Mushrooms: "mushrooms",
-  Risotto: "mushrooms",
-  "Spicy Food": "spicy_asian",
-  "Hard Cheese": "hard_cheese",
-  "Maturated Cheese": "hard_cheese",
-  "Soft Cheese": "soft_cheese",
-  "Goat Cheese": "soft_cheese",
-  "Blue Cheese": "blue_cheese",
-  Salad: "salads",
-  Vegetarian: "vegetarian",
-  "Cold Cuts": "charcuterie",
-  "Cured Meat": "charcuterie",
-  Fruit: "dessert_fruit",
-  "Fruit Dessert": "dessert_fruit",
-  "Sweet Dessert": "dessert_fruit",
-  Cake: "dessert_fruit",
-  Cream: "dessert_fruit",
-  Chocolate: "chocolate",
-};
-
-/** X-Wines lagrar listor som Python-literaler: "['Merlot', 'Syrah']". */
-export function parsePyList(raw: string): string[] {
-  const out: string[] = [];
-  const re = /'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"/g;
-  for (const m of raw.matchAll(re)) out.push((m[1] ?? m[2] ?? "").replace(/\\(.)/g, "$1"));
-  return out;
-}
-
-export interface XWinesWine {
-  xwinesId: string;
-  name: string;
-  producer: string | null;
-  country: string | null;
-  region: string | null;
-  color: WineColor | null;
-  grapes: string[];
-  abv: number | null;
-  body: string | null;
-  acidity: string | null;
-  food: FoodKey[];
-}
-
-export function mapWine(row: Record<string, string>): XWinesWine {
-  const abv = Number(row.ABV);
-  const food = [...new Set(parsePyList(row.Harmonize ?? "").flatMap((h) => FOODS[h] ?? []))];
-  return {
-    xwinesId: row.WineID!,
-    name: row.WineName!.trim(),
-    producer: row.WineryName?.trim() || null,
-    country: row.Country?.trim() || null,
-    region: row.RegionName?.trim() || null,
-    color: COLORS[row.Type ?? ""] ?? null,
-    grapes: parsePyList(row.Grapes ?? ""),
-    abv: Number.isFinite(abv) && abv > 0 && abv <= 30 ? abv : null,
-    body: row.Body?.trim() || null,
-    acidity: row.Acidity?.trim() || null,
-    food,
-  };
-}
+export { mapWine, parsePyList, type XWinesWine } from "./xwinesMap.ts";
 
 export interface VintageAggregate {
   xwinesId: string;
