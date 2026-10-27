@@ -174,7 +174,7 @@ const tourFonts: FontTokens = {
 const tourBase = {
   family: "tour" as const,
   fonts: tourFonts,
-  type: { display: 32, title: 26, heading: 18, body: 16, small: 14, label: 12 },
+  type: { display: 34, title: 28, heading: 20, body: 17, small: 15, label: 13 },
   space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 },
   radius: { card: 12, button: 8, field: 8, chip: 999 },
   button: { style: "flat" as const, uppercase: true, letterSpacing: 1.2, font: "label" as const, edgeHeight: 0 },
@@ -187,24 +187,24 @@ export const tourLight: Theme = {
   name: "Tour (Mallorca), ljus",
   colors: {
     background: "#fcf7ed", // paper
-    surface: "#f6ecd4",
-    surfaceRaised: "#efdfb8", // parchment
-    highlight: "#f1dcc0",
-    border: "rgba(44,31,20,0.32)",
-    text: "#1b2a41", // ink
-    textMuted: "#454034", // ink-soft
-    primary: "#7a2331", // maroon
-    onPrimary: "#fbf4e3",
-    primaryEdge: "#5e1a24",
+    surface: "#f3e6c6",
+    surfaceRaised: "#ead9aa", // parchment
+    highlight: "#f1d9b8",
+    border: "rgba(44,31,20,0.5)",
+    text: "#111c2e", // ink
+    textMuted: "#3a362b", // ink-soft
+    primary: "#6e1d2b", // maroon
+    onPrimary: "#fffaf0",
+    primaryEdge: "#52141e",
     secondary: "transparent",
-    onSecondary: "#1b2a41",
-    secondaryEdge: "#8f6a32", // gold
-    accent: "#8f6a32",
-    navActive: "#7a2331",
-    success: "#3b4a33", // fairway
-    warning: "#8f5a12",
-    danger: "#7a2331",
-    tag: "#efdfb8",
+    onSecondary: "#111c2e",
+    secondaryEdge: "#7a5822", // gold
+    accent: "#7a5822",
+    navActive: "#6e1d2b",
+    success: "#2f4a2a", // fairway
+    warning: "#7d4c08",
+    danger: "#8a1c2c",
+    tag: "#ead9aa",
     onTag: "#2c1f14",
   },
   backgroundCss: "#fcf7ed",
@@ -216,25 +216,25 @@ export const tourDark: Theme = {
   name: "Tour (Mallorca), mörk",
   colors: {
     background: "#100c07",
-    surface: "#1d160d",
-    surfaceRaised: "#2b2115",
-    highlight: "#3a1f22",
-    border: "rgba(230,214,170,0.24)",
-    text: "#f1e6c8",
-    textMuted: "#c9bc9c",
+    surface: "#201810",
+    surfaceRaised: "#30251a",
+    highlight: "#40242a",
+    border: "rgba(230,214,170,0.4)",
+    text: "#fbf3dc",
+    textMuted: "#d9cdb0",
     primary: "#b83d50", // Mallorcas #c24558, något mörkare för läsbar knapptext (WCAG AA)
     onPrimary: "#fbf4e3",
     primaryEdge: "#e0687a",
     secondary: "transparent",
-    onSecondary: "#f1e6c8",
+    onSecondary: "#fbf3dc",
     secondaryEdge: "#c9a15c",
     accent: "#e0bd7c",
     navActive: "#e0bd7c",
     success: "#8fa379",
     warning: "#e0bd7c",
     danger: "#e0687a",
-    tag: "#2b2115",
-    onTag: "#f1e6c8",
+    tag: "#30251a",
+    onTag: "#fbf3dc",
   },
   backgroundCss: "#100c07",
 };
