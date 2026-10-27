@@ -67,6 +67,34 @@ export function openFoodFactsProvider(
       const candidate = toCandidate(ean, body.product);
       return candidate ? [candidate] : [];
     },
+
+    // OFF begränsar sökningar till 10/minut per IP-adress. Anropas därför
+    // från klienten (varje användares egen gräns) och bara som reserv.
+    async search(query) {
+      const params = new URLSearchParams({
+        search_terms: query,
+        tagtype_0: "categories",
+        tag_contains_0: "contains",
+        tag_0: "wines",
+        json: "1",
+        page_size: "10",
+        fields: FIELDS,
+      });
+      const res = await doFetch(`${baseUrl}/cgi/search.pl?${params}`, {
+        headers: opts.userAgent ? { "User-Agent": opts.userAgent } : {},
+      });
+      if (res.status === 429) return [];
+      if (!res.ok) throw new Error(`openfoodfacts: HTTP ${res.status}`);
+      const body = (await res.json()) as { products?: OffProduct[] };
+      const seen = new Set<string>();
+      return (body.products ?? []).flatMap((p) => {
+        const c = p.code ? toCandidate(p.code, p) : null;
+        const key = c && `${c.producer ?? ""}|${c.name}`.toLowerCase();
+        if (!c || !key || seen.has(key)) return [];
+        seen.add(key);
+        return [c];
+      });
+    },
   };
 }
 
@@ -81,7 +109,9 @@ function toCandidate(ean: string, p: OffProduct): WineCandidate | null {
     CATEGORY_COLORS.find(([tag]) => categories.includes(tag))?.[1] ??
     guessColor(text);
   const abv = p.nutriments?.alcohol ?? p.nutriments?.alcohol_100g;
-  const country = p.countries_tags?.[0]?.replace(/^en:/, "");
+  // "en:united-kingdom" → "United kingdom"
+  const tag = p.countries_tags?.[0]?.replace(/^en:/, "").replace(/-/g, " ");
+  const country = tag ? tag[0]!.toUpperCase() + tag.slice(1) : undefined;
 
   return {
     source: "openfoodfacts",

@@ -65,6 +65,14 @@ För att slå på inloggning med e-postkod igen: sätt `EXPO_PUBLIC_LOGIN_ENABLE
 
 ### 2. Importera vindata (valfritt men rekommenderat)
 
+**Enklast: GitHub Action.** Lägg Supabase-adressen som hemlighet `SUPABASE_DB_URL`
+(Supabase → Project Settings → Database → Connection string → **Session pooler**)
+under GitHub → Settings → Secrets and variables → Actions. Kör sedan
+**Actions → Importera X-Wines → Run workflow**. Den laddar ner X-Wines från
+datasetets Google Drive och importerar viner och betyg.
+
+Manuellt från egen dator:
+
 ```bash
 # X-Wines: ladda ner Full-versionen (länk i X-Wines README) till data/raw/
 npm run xwines -w @trand-vine/importers -- data/raw/XWines_Full_100K_wines.csv data/raw/XWines_Full_21M_ratings.csv > data/raw/xwines.sql

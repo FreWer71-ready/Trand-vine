@@ -4,6 +4,7 @@ import {
   ACQUISITION_LABELS,
   COLOR_LABELS,
   extractVintage,
+  toCanonicalEan,
   type AcquisitionType,
   type WineCandidate,
   type WineColor,
@@ -17,6 +18,7 @@ import {
   ensureVintage,
   getWine,
   linkBarcode,
+  searchExternal,
   searchWines,
   wineHistory,
   type HistoryRow,
@@ -57,20 +59,52 @@ function ChooseWine({ scan, onChoose }: { scan: ScanResult | null; onChoose: (c:
   const locale = useLocale();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<WineRow[]>([]);
+  const [external, setExternal] = useState<WineCandidate[]>([]);
+  // Vilken sökning resultaten hör till, så att svar på gamla sökord ignoreras.
+  const [searched, setSearched] = useState("");
+  const [searching, setSearching] = useState(false);
   const [manual, setManual] = useState(false);
   const [name, setName] = useState("");
   const [producer, setProducer] = useState("");
   const [color, setColor] = useState<WineColor | null>(null);
 
+  // Sök först i eget register; hittas för lite, fråga Open Food Facts.
   useEffect(() => {
-    const id = setTimeout(() => {
-      searchWines(query).then(setResults, () => setResults([]));
-    }, 300);
-    return () => clearTimeout(id);
+    const q = query.trim();
+    if (q.length < 2) {
+      setResults([]);
+      setExternal([]);
+      setSearched("");
+      return;
+    }
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      setSearching(true);
+      const own = await searchWines(q).catch(() => []);
+      if (cancelled) return;
+      setResults(own);
+      const more = own.length < 3 ? await searchExternal(q).catch(() => []) : [];
+      if (cancelled) return;
+      setExternal(more);
+      setSearched(q);
+      setSearching(false);
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+      setSearching(false);
+    };
   }, [query]);
+
+  const startManual = () => {
+    setManual(true);
+    setName(query.trim());
+  };
 
   if (scan?.status === "known") return <Screen><Body>{t("lookingUp")}</Body></Screen>;
 
+  const noHits =
+    !searching && !manual && !!searched && searched === query.trim() && results.length === 0 && external.length === 0;
   const candidates = scan?.status === "candidates" ? scan.candidates : [];
   const registry = scan?.registryMatches ?? [];
 
@@ -93,9 +127,25 @@ function ChooseWine({ scan, onChoose }: { scan: ScanResult | null; onChoose: (c:
       ))}
 
       <Field label={t("search")} value={query} onChangeText={setQuery} autoCorrect={false} />
+      {searching && <T variant="muted">{t("searching")}</T>}
       {results.map((w) => (
         <WineCard key={w.id} title={[w.producer, w.name].filter(Boolean).join(" – ")} subtitle={[w.region, w.country].filter(Boolean).join(", ")} onPress={() => onChoose({ kind: "existing", wine: w })} />
       ))}
+      {external.length > 0 && <T variant="label">{t("fromOpenFoodFacts")}</T>}
+      {external.map((c) => (
+        <WineCard
+          key={`ext:${c.sourceId}`}
+          title={[c.producer, c.name].filter(Boolean).join(" – ")}
+          subtitle={[c.country, c.bottleSizeMl ? `${c.bottleSizeMl / 10} cl` : null].filter(Boolean).join(" · ")}
+          onPress={() => onChoose({ kind: "new", candidate: c })}
+        />
+      ))}
+      {noHits && (
+        <Card highlight>
+          <T variant="body">{t("noHits", { q: searched })}</T>
+          <Button title={t("addAsNew", { q: searched })} onPress={startManual} />
+        </Card>
+      )}
 
       {manual ? (
         <Card>
@@ -121,7 +171,7 @@ function ChooseWine({ scan, onChoose }: { scan: ScanResult | null; onChoose: (c:
           />
         </Card>
       ) : (
-        <Button title={t("addManually")} variant="secondary" onPress={() => { setManual(true); setName(query); }} />
+        !noHits && <Button title={t("addManually")} variant="secondary" onPress={startManual} />
       )}
     </Screen>
   );
@@ -184,9 +234,9 @@ function BottleDetails({
     setError(null);
     try {
       const wine = choice.kind === "existing" ? choice.wine : await createWine(choice.candidate);
-      if (scan && scan.status !== "invalid_barcode" && "ean" in scan) {
-        await linkBarcode(scan.ean, wine.id, candidate?.source ?? "user", size);
-      }
+      const ean =
+        scan && scan.status !== "invalid_barcode" && "ean" in scan ? scan.ean : toCanonicalEan(candidate?.ean ?? "");
+      if (ean) await linkBarcode(ean, wine.id, candidate?.source ?? "user", size);
       const vintageId = await ensureVintage(wine.id, nonVintage ? null : yearNum);
       const id = await createBottle({
         vintage_id: vintageId,

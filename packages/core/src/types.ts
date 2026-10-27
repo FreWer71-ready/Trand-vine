@@ -82,4 +82,6 @@ export interface WineCandidate {
 export interface WineProvider {
   name: string;
   lookupByBarcode(ean: string): Promise<WineCandidate[]>;
+  /** Fritextsökning på namn/producent, om källan stöder det. */
+  search?(query: string): Promise<WineCandidate[]>;
 }

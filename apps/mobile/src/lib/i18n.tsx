@@ -88,6 +88,10 @@ const STRINGS = {
     adviceDisclaimer: "Råden är tumregler baserade på vintyp, druva, region och årgång.",
     error: "Något gick fel",
     cancel: "Avbryt",
+    searching: "Söker…",
+    noHits: "Inga träffar för \"{q}\".",
+    addAsNew: "Lägg till \"{q}\" som nytt vin",
+    fromOpenFoodFacts: "Från Open Food Facts",
     startFailed: "Appen kunde inte starta. Kontrollera nätverket och försök igen.",
   },
   en: {
@@ -175,6 +179,10 @@ const STRINGS = {
     adviceDisclaimer: "Advice is a rule of thumb based on wine type, grape, region and vintage.",
     error: "Something went wrong",
     cancel: "Cancel",
+    searching: "Searching…",
+    noHits: "No matches for \"{q}\".",
+    addAsNew: "Add \"{q}\" as a new wine",
+    fromOpenFoodFacts: "From Open Food Facts",
     startFailed: "The app could not start. Check your connection and try again.",
   },
 } satisfies Record<Locale, Record<string, string>>;
