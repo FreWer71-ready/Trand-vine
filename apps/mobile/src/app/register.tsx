@@ -11,7 +11,7 @@ import {
 } from "@trand-vine/core";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Body, Button, Card, Chips, ErrorText, Field, Heading, Screen, T, Title } from "../components/ui.tsx";
+import { Body, Button, Card, Chips, ErrorText, Field, Heading, Screen, Stepper, T, Title } from "../components/ui.tsx";
 import {
   createBottle,
   createWine,
@@ -208,6 +208,7 @@ function BottleDetails({
   const [year, setYear] = useState(candidate?.vintage ? String(candidate.vintage) : "");
   const [nonVintage, setNonVintage] = useState(false);
   const [size, setSize] = useState(candidate?.bottleSizeMl && SIZES.includes(candidate.bottleSizeMl) ? candidate.bottleSizeMl : 750);
+  const [quantity, setQuantity] = useState(1);
   const [acq, setAcq] = useState<AcquisitionType>("purchase");
   const [date, setDate] = useState(today());
   const [price, setPrice] = useState("");
@@ -241,6 +242,7 @@ function BottleDetails({
       const id = await createBottle({
         vintage_id: vintageId,
         size_ml: size,
+        quantity,
         acquisition_type: acq,
         acquired_at: date,
         price: acq === "purchase" ? priceNum : null,
@@ -282,13 +284,14 @@ function BottleDetails({
       <Body muted>{t("vintageHelp")}</Body>
 
       <Chips label={t("size")} value={size} onChange={setSize} options={SIZES.map((s) => ({ value: s, label: (s >= 1000 ? `${s / 1000} l` : `${s / 10} cl`).replace(".", locale === "sv" ? "," : ".") }))} />
+      <Stepper label={t("quantity")} value={quantity} onChange={setQuantity} />
 
       <Heading>{t("howAcquired")}</Heading>
       <Chips value={acq} onChange={setAcq} options={ACQUISITIONS.map((a) => ({ value: a, label: ACQUISITION_LABELS[a][locale] }))} />
       <Field label={t("date")} value={date} onChangeText={setDate} maxLength={10} />
       {acq === "purchase" && (
         <>
-          <Field label={t("price")} value={price} onChangeText={setPrice} keyboardType="decimal-pad" />
+          <Field label={quantity > 1 ? t("pricePerBottle") : t("price")} value={price} onChangeText={setPrice} keyboardType="decimal-pad" />
           <Field label={t("currency")} value={currency} onChangeText={setCurrency} autoCapitalize="characters" maxLength={3} />
           <Field label={t("store")} value={store} onChangeText={setStore} />
         </>
@@ -298,7 +301,7 @@ function BottleDetails({
       <Field label={t("location")} value={location} onChangeText={setLocation} />
 
       <ErrorText>{error ?? (!yearValid ? t("needYear") : !isIsoDate(date) ? t("needDate") : !valid ? t("needPrice") : null)}</ErrorText>
-      <Button title={t("addBottle")} onPress={save} loading={busy} disabled={!valid} />
+      <Button title={quantity > 1 ? t("addBottles", { n: quantity }) : t("addBottle")} onPress={save} loading={busy} disabled={!valid} />
     </Screen>
   );
 }

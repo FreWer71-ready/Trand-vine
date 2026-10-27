@@ -39,6 +39,7 @@ export interface BottleRow {
   id: string;
   vintage_id: string;
   size_ml: number;
+  quantity: number;
   acquisition_type: AcquisitionType;
   acquired_at: string | null;
   price: number | null;
@@ -170,6 +171,7 @@ export async function linkBarcode(ean: string, wineId: string, source: string, s
 export interface NewBottle {
   vintage_id: string;
   size_ml: number;
+  quantity: number;
   acquisition_type: AcquisitionType;
   acquired_at?: string | null;
   price?: number | null;
@@ -197,6 +199,33 @@ export async function listBottles(statuses: BottleStatus[]): Promise<BottleRow[]
       .order("consumed_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false }),
   ) as BottleRow[];
+}
+
+export interface TakeBottle {
+  status: "consumed" | "given_away";
+  consumed_at: string;
+  consumed_with?: string | null;
+  consumed_food?: string | null;
+  rating?: number | null;
+  notes?: string | null;
+}
+
+/**
+ * Tar en flaska ur en post (drucken eller bortgiven). Finns fler kvar minskas
+ * antalet och den uttagna flaskan blir en egen rad. Returnerar dess id.
+ */
+export async function takeBottle(id: string, t: TakeBottle): Promise<string> {
+  return check(
+    await supabase.rpc("take_bottle", {
+      target: id,
+      new_status: t.status,
+      on_date: t.consumed_at,
+      with_whom: t.consumed_with ?? null,
+      food: t.consumed_food ?? null,
+      score: t.rating ?? null,
+      note: t.notes ?? null,
+    }),
+  ) as string;
 }
 
 export async function updateBottle(id: string, patch: Partial<Omit<BottleRow, "id" | "vintages">>) {

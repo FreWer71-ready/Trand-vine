@@ -3,9 +3,10 @@
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { router, useIsFocused } from "expo-router";
 import { useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 import { Body, Button, ErrorText, Field, Loading, Screen, T } from "../../components/ui.tsx";
 import { lookupBarcode } from "../../lib/api.ts";
+import { cameraRemembered, rememberCamera } from "../../lib/cameraConsent.ts";
 import { useT } from "../../lib/i18n.tsx";
 import { openManualAdd, setPendingScan } from "../../lib/scanStore.ts";
 import { useTheme } from "../../lib/theme.tsx";
@@ -15,6 +16,8 @@ export default function Scan() {
   const focused = useIsFocused();
   const theme = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
+  // Webb: har användaren sagt ja förut startar vi kameran direkt (se cameraConsent).
+  const [webAllowed, setWebAllowed] = useState(cameraRemembered);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [typed, setTyped] = useState("");
@@ -60,12 +63,21 @@ export default function Scan() {
     </>
   );
 
+  const web = Platform.OS === "web";
   if (!permission) return <Loading />;
-  if (!permission.granted) {
+  const blocked = permission.status === "denied" && !permission.canAskAgain;
+  if (!permission.granted && !(web && webAllowed && !blocked)) {
+    // På webben startar knappen kameran direkt, så att webbläsaren bara frågar en gång.
+    const allow = web
+      ? () => {
+          rememberCamera(true);
+          setWebAllowed(true);
+        }
+      : requestPermission;
     return (
       <Screen>
-        <Body>{t("cameraPermission")}</Body>
-        <Button title={t("allowCamera")} onPress={requestPermission} />
+        <Body>{blocked || (web && permission.status === "denied") ? t("cameraBlocked") : t("cameraPermission")}</Body>
+        <Button title={t("allowCamera")} onPress={allow} />
         {fallback}
       </Screen>
     );
@@ -79,6 +91,12 @@ export default function Scan() {
           facing="back"
           barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "itf14"] }}
           onBarcodeScanned={busy ? undefined : onScanned}
+          onCameraReady={() => rememberCamera(true)}
+          onMountError={() => {
+            // Nekad eller ingen kamera: glöm ja:et och visa alternativen.
+            rememberCamera(false);
+            setWebAllowed(false);
+          }}
         />
       )}
       <View style={styles.overlay}>
