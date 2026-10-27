@@ -6,6 +6,7 @@ lagring, drickfönster, servering, mat och tillfälle. Har du haft vinet förut
 visas din historik direkt.
 
 Bakgrund och beslut: [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md).
+Utseendet kommer från designsystemet i [docs/DESIGNSYSTEM.md](docs/DESIGNSYSTEM.md) (temat Tour).
 
 <p>
   <img src="docs/screenshots/cellar.png" width="240" alt="Källare" />
@@ -17,6 +18,7 @@ Bakgrund och beslut: [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md).
 
 ```
 apps/mobile/            Expo-app (iOS, Android, webb) – expo-router, expo-camera
+packages/design/        Designsystem: temana party (Partyplan) och tour (Mallorca)
 packages/core/          Delad logik: streckkoder, datakällor, regelmotor för råd, texter sv/en
 packages/importers/     Import av öppna dataset (X-Wines, LWIN) till databasen
 backend/supabase/       Databasschema (Postgres + RLS), serverfunktion lookup-barcode, tester
