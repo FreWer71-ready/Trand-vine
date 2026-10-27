@@ -50,23 +50,20 @@ $$;
 -- som JSON. Används av funktionen import-xwines och av importverktyget.
 -- Kan köras om; befintliga viner och priser uppdateras.
 
+-- Utan temporär tabell: raderna läses två gånger direkt ur JSON.
 create function private.import_systembolaget(rows jsonb) returns integer
 language plpgsql
 set search_path = ''
 as $$
 declare n integer;
 begin
-  create temp table sb on commit drop as
-  select * from jsonb_to_recordset(rows) as x(
-    "productNumber" text, "shortNumber" text, name text, producer text, country text,
-    region text, appellation text, color text, grapes text[], abv numeric, food text[],
-    "imageUrl" text, vintage smallint, "volumeMl" integer, price numeric);
-
   insert into public.wines (systembolaget_nr, name, producer, country, region, appellation,
                             color, grapes, abv, food_pairings, image_url, source)
-  select "productNumber", name, producer, country, region, appellation,
-         color::public.wine_color, coalesce(grapes, '{}'), abv, coalesce(food, '{}'), "imageUrl", 'systembolaget'
-  from sb
+  select x."productNumber", x.name, x.producer, x.country, x.region, x.appellation,
+         x.color::public.wine_color, coalesce(x.grapes, '{}'), x.abv, coalesce(x.food, '{}'), x."imageUrl", 'systembolaget'
+  from jsonb_to_recordset(rows) as x(
+    "productNumber" text, name text, producer text, country text, region text, appellation text,
+    color text, grapes text[], abv numeric, food text[], "imageUrl" text)
   on conflict (systembolaget_nr) do update set
     name = excluded.name, producer = excluded.producer, country = excluded.country,
     region = excluded.region, appellation = excluded.appellation, color = excluded.color,
@@ -74,14 +71,14 @@ begin
     image_url = excluded.image_url;
 
   insert into public.systembolaget_products (product_number, short_number, wine_id, vintage, volume_ml, price)
-  select sb."productNumber", sb."shortNumber", w.id, sb.vintage, sb."volumeMl", sb.price
-  from sb join public.wines w on w.systembolaget_nr = sb."productNumber"
+  select x."productNumber", x."shortNumber", w.id, x.vintage, x."volumeMl", x.price
+  from jsonb_to_recordset(rows) as x(
+    "productNumber" text, "shortNumber" text, vintage smallint, "volumeMl" integer, price numeric)
+  join public.wines w on w.systembolaget_nr = x."productNumber"
   on conflict (product_number) do update set
     short_number = excluded.short_number, wine_id = excluded.wine_id, vintage = excluded.vintage,
     volume_ml = excluded.volume_ml, price = excluded.price, updated_at = now();
   get diagnostics n = row_count;
-
-  drop table sb;
   return n;
 end $$;
 
