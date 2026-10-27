@@ -26,10 +26,10 @@ Flöde för identifiering:
 Skanna EAN ──► Egen cache/DB ──träff──► Bekräfta årgång ──► Klar
                    │ miss
                    ▼
-           Externa källor (Systembolaget, Open Food Facts, UPC-tjänster)
+           Externa källor (Open Food Facts, UPCitemdb)
                    │ miss / osäkert
                    ▼
-           Etikettfoto ──► Vision-AI (OCR + tolkning) ──► Matcha ──► Bekräfta
+           Etikettfoto ──► OCR på telefonen ──► Sök i LWIN/X-Wines ──► Bekräfta
                    │ miss
                    ▼
            Manuell sökning / manuell registrering
@@ -39,24 +39,40 @@ Skanna EAN ──► Egen cache/DB ──träff──► Bekräfta årgång ─�
 
 ## 3. Datakällor och API:er
 
+**Beslut:** global app, endast gratis källor i första läget.
+
+### Gratis källor (används i v1)
+
 | Behov | Källa | Kommentar |
 |---|---|---|
-| EAN → produkt (Sverige) | **Systembolaget** sortiment | Bäst täckning för svenska användare. Det öppna API:et har stängts/begränsats – kontrollera aktuella villkor. Alternativ: periodiska sortimentsdumpar som byggs upp i egen databas. |
-| EAN → produkt (globalt) | **Open Food Facts** (gratis, öppen data, ODbL) | Har en del viner med EAN, varierande kvalitet. Bra gratis fallback. |
-| EAN → produkt | **UPCitemdb**, **Barcode Lookup**, **GS1 (Verified by GS1)** | Kommersiella/frigräns. GS1 ger tillverkardata men ofta tunn vininfo. |
-| Viner, priser, betyg | **Wine-Searcher API** | Betalt. Kritikerbetyg (aggregerat), priser, producent, region. |
-| Kritikerbetyg | **Global Wine Score** | Betalt API, aggregerar kritikerbetyg per årgång. |
-| Community-recensioner | **Vivino** | Inget officiellt publikt API, skrapning bryter mot villkoren → **använd inte**. Länka gärna ut till vinet istället. |
-| Egen källa | **CellarTracker** | Inget öppet API, men användare kan exportera sin egen källare (CSV) → import-funktion. |
-| Egna recensioner | **Appens egna användare** | Långsiktigt den viktigaste källan: egna betyg och anteckningar. |
-| Etikett-igenkänning | **Claude (vision)** / Google ML Kit text recognition | Läs producent, namn, årgång, region från foto. |
-| Rådgivning (lagring, drickfönster, mat, tillfälle) | **Claude API** med strukturerad output | Genereras från vindata (druva, region, årgång, stil, alkohol, socker, syra) + ev. källdata. Cachas per vin+årgång. |
-| Druv/region-grunddata | Egen kurerad tabell (+ Wikidata) | Ger stabila regler för drickfönster/lagring som AI:n kan luta sig mot. |
+| EAN → produkt (globalt) | **Open Food Facts** | Gratis, öppen data (ODbL), öppet API utan nyckel. Har en del viner med EAN, varierande kvalitet. Första externa uppslag. |
+| EAN → produkt | **UPCitemdb** (gratisnivå) | 100 anrop/dag utan registrering (varav 20 sökningar). Används sparsamt som andra uppslag; resultat cachas i egen DB. |
+| Vinregister (namn, producent, region, färg) | **LWIN-databasen** (Liv-ex) | Gratis, Creative Commons, 200 000+ viner. Laddas ned som XLSX och importeras i egen DB. Ger stabil vin-identitet (LWIN-kod) att matcha mot – men innehåller inga EAN. |
+| Vindata + community-betyg (startdata) | **X-Wines** (öppet forskningsdataset) | ~100 000 viner från 62 länder, druvor, alkohol, årgångar, medelbetyg och 21 milj. betyg (2012–2021). Importeras som startdata så appen har betyg från dag ett. Kontrollera licensvillkor före kommersiell användning. |
+| Druvor, regioner, producenter | **Wikidata** | Gratis, öppen data. Kompletterar druv-/regionsfakta. |
+| Etikett-igenkänning (OCR) | **Google ML Kit Text Recognition** | Gratis, körs på telefonen. Läser text från etiketten → fritextsökning mot egen DB. |
+| Betyg | **Appens användare** | Medelbetyg (1–5) per vin och årgång från alla användare. Långsiktigt den viktigaste källan. |
+| Råd (lagring, drickfönster, mat, tillfälle) | **Egen regelmotor** | Regler per färg/druva/region/stil + årgång. Gratis och förutsägbar. |
+| Import | **CellarTracker CSV-export** | Användaren exporterar sin egen källare och importerar. |
 
-**Rekommendation för MVP:** Systembolaget-data (där det går) + Open Food Facts +
-etikettfoto via Claude vision + egen databas som växer med varje registrering.
-Lägg till betalda betygs-API:er (Wine-Searcher / Global Wine Score) när det finns
-behov och budget.
+### Använd inte
+
+- **Vivino** – inget publikt API, skrapning bryter mot villkoren. Länka gärna ut.
+
+### Senare (kostar, när det finns behov/budget)
+
+| Källa | Vad det tillför |
+|---|---|
+| **Claude API** (vision + text) | Bättre etikettigenkänning från foto och mer nyanserade, välformulerade råd. Låg kostnad per anrop och resultaten cachas per vin/årgång, men inte gratis. |
+| **Wine-Searcher API**, **Global Wine Score** | Kritikerbetyg och priser. |
+| **UPCitemdb** betald nivå / **GS1** | Fler EAN-träffar. |
+
+### Strategi: egen databas som växer
+
+Varje gång en användare skannar en EAN som inte fanns och sedan bekräftar vilket
+vin det är, sparas kopplingen `EAN → vin` i egen databas. Nästa användare får
+träff direkt. Med en global användarbas blir den egna databasen snabbt den bästa
+källan – helt gratis.
 
 ---
 
@@ -66,7 +82,9 @@ behov och budget.
 |---|---|---|
 | App | **React Native + Expo** (TypeScript) | iOS + Android från en kodbas, bra kamera/streckkodsstöd (`expo-camera`). |
 | Backend | **Supabase** (Postgres, Auth, Storage, Edge Functions) | Snabb start, SQL-databas, inloggning, bildlagring, serverfunktioner för API-nycklar. |
-| AI | **Claude API** (anropas endast från backend) | Etikett-OCR, sammanfattning av recensioner, råd om lagring/mat/drickfönster. |
+| OCR | **Google ML Kit** (på telefonen) | Gratis etikettläsning. |
+| Råd | Egen regelmotor i backend | Gratis. Claude API kan läggas till senare för bättre etikettigenkänning och råd. |
+| Inloggning | Supabase Auth (Apple, Google, e-post med magisk länk) | Enkelt, endast visningsnamn. |
 | Offline | Lokal SQLite i appen (t.ex. `expo-sqlite`) | Källaren ska gå att bläddra i utan nät, synkas sen. |
 | Notiser | Expo Notifications | "Dags att dricka"-påminnelser. |
 
@@ -100,13 +118,13 @@ trand-vine/
 │       ├── migrations/         # SQL-schema
 │       └── functions/          # Edge functions
 │           ├── lookup-barcode/     # EAN → vin (cache + externa källor)
-│           ├── identify-label/     # Foto → vin (vision-AI)
+│           ├── identify-label/     # OCR-text → vin (sök i egen DB)
 │           ├── fetch-reviews/      # Hämta/aggregera betyg
 │           ├── recommend/          # Lagring, drickfönster, mat, tillfälle
 │           └── drink-reminders/    # Schemalagd: notiser
 ├── packages/
 │   ├── shared/                 # Delade typer (Wine, Bottle, ...) + zod-scheman
-│   └── providers/              # Adaptrar per datakälla (systembolaget, off, ...)
+│   └── providers/              # Adaptrar per datakälla (openfoodfacts, upcitemdb, lwin, xwines)
 └── docs/
 ```
 
@@ -129,22 +147,24 @@ interface WineProvider {
 wines               – ett vin oberoende av årgång
   id, name, producer, country, region, appellation,
   color (röd/vit/rosé/mousserande/sött/starkvin),
-  grapes[], style, abv, sugar, acidity, image_url
+  grapes[], style, abv, sugar, acidity, image_url,
+  lwin (LWIN-kod), xwines_id
 
 wine_barcodes       – EAN → vin (en flaska kan ha flera EAN, olika storlekar)
   ean, wine_id, bottle_size_ml, source
 
 vintages            – vin + årgång (betyg och råd hör hit)
-  id, wine_id, year
+  id, wine_id, year,
+  avg_rating, rating_count      -- community-medelbetyg (1–5), uppdateras vid nytt betyg
 
 reviews             – betyg/recensioner från källor eller användare
   id, vintage_id, source, score, scale, text, author, url, fetched_at
 
-recommendations     – AI/regel-genererade råd, cachade per årgång
+recommendations     – regel-genererade råd (senare ev. AI), cachade per årgång
   vintage_id, drink_from, drink_to, peak_from, peak_to,
   storage (temp, liggande, potential_years),
   food_pairings[], occasions[], serving_temp, decant_minutes,
-  model_version, generated_at
+  rules_version, generated_at
 
 bottles             – en fysisk flaska som användaren äger/ägt
   id, user_id, vintage_id, size_ml,
@@ -156,7 +176,7 @@ bottles             – en fysisk flaska som användaren äger/ägt
   consumed_at, consumed_with, consumed_food,
   rating, notes, photo_url
 
-users
+users               – id, display_name, auth_provider, locale
 ```
 
 **Historik** blir då en enkel fråga: alla `bottles` för samma `wine_id`
@@ -168,13 +188,15 @@ users
 
 ### MVP (version 1)
 1. **Skanna streckkod** och identifiera vin (cache → externa källor).
-2. **Etikettfoto som fallback** (Claude vision) + manuell sökning/registrering.
+2. **Etikettfoto som fallback** (OCR på telefonen → sök i LWIN/X-Wines) + manuell sökning/registrering.
+   Bekräftad koppling `EAN → vin` sparas så nästa användare får träff direkt.
 3. **Bekräfta årgång och storlek.**
 4. **Ange anskaffning:** köp (pris, butik, datum), gåva (från vem, tillfälle),
    vinprovning, arv, byte, annat.
 5. **"Du har haft detta vin förut!"** – visas direkt vid skanning, med tidigare
    betyg, anteckningar, när/med vem det dracks.
-6. **Recensioner/betyg** – aggregerat från tillgängliga källor + egna.
+6. **Betyg:** community-medelbetyg (1–5) + antal betyg, startdata från X-Wines.
+   Ditt eget betyg räknas in i medelvärdet; anteckningar är privata.
 7. **Råd per flaska:**
    - Lagring: temperatur, liggande/stående, lagringspotential.
    - Drickfönster: tidigast / topp / senast (med tidslinje).
@@ -195,7 +217,7 @@ users
 
 ### Senare
 - Socialt: dela betyg med vänner.
-- Inköpslista / önskelista med länk till Systembolaget.
+- Inköpslista / önskelista med länk till lokala butiker (t.ex. Systembolaget i Sverige).
 - Smaksprofil som lär sig av dina betyg och anpassar rekommendationer.
 
 ---
@@ -206,24 +228,26 @@ users
    kritikers drickfönster från källor.
 2. Kör regelbaserad grund (t.ex. "lätt vardagsvitt: drick inom 1–2 år",
    "Barolo från bra årgång: 8–25 år").
-3. Låt Claude förfina och formulera råd med **strukturerad JSON-output** enligt
-   schemat i `recommendations`, med källhänvisning där det finns.
+3. Översätt resultatet till texter (svenska/engelska) enligt schemat i
+   `recommendations`. Senare kan Claude API förfina råden (betald).
 4. Cacha per `vintage_id` – samma vin/årgång behöver inte genereras igen.
-5. Visa tydligt i appen vad som är källdata och vad som är AI-genererat råd.
+5. Visa tydligt i appen vad som är källdata och vad som är genererat råd.
 
 ---
 
-## 9. Öppna frågor
+## 9. Beslut
 
-- Endast Sverige först (Systembolaget-fokus) eller globalt från start?
-- Budget för betalda API:er (Wine-Searcher, Global Wine Score)?
-- Konto obligatoriskt, eller lokalt läge utan inloggning?
-- Ska användarnas egna betyg delas mellan användare (community) från start?
+| Fråga | Beslut |
+|---|---|
+| Marknad | **Hela världen** från start. Appen på svenska + engelska (i18n från dag ett). |
+| Betalda API:er | **Nej** i första läget – endast gratis källor (se avsnitt 3). |
+| Konto | **Ja, obligatoriskt men enkelt:** logga in med Apple, Google eller e-post (magisk länk). Endast visningsnamn krävs, inga andra uppgifter. |
+| Community-betyg | **Ja.** Andras betyg visas som **medelbetyg** (1–5) + antal betyg per vin och årgång. Egna anteckningar är privata. |
 
 ## 10. Föreslagen ordning
 
-1. Datamodell + Supabase-schema.
+1. Datamodell + Supabase-schema + inloggning. Importera LWIN och X-Wines.
 2. Expo-app med skanning → `lookup-barcode` (Open Food Facts + egen DB).
 3. Registrera flaska med anskaffningstyp + historik-kontroll.
-4. `identify-label` (etikettfoto) och `recommend` (Claude).
+4. `identify-label` (OCR + sökning), regelmotorn `recommend`, community-betyg.
 5. Källarvy, "markera som drucken", påminnelser.
