@@ -34,6 +34,9 @@ scripts/test-db.sh      Kör databastester mot en temporär lokal Postgres
 | [UPCitemdb](https://www.upcitemdb.com) | Streckkod → produkt (100 uppslag/dag gratis) |
 | [X-Wines](https://github.com/rogerioxavier/X-Wines) (CC0) | ~100 000 viner, druvor, matkombinationer och 21 milj. betyg som startbetyg |
 | [LWIN](https://www.liv-ex.com/lwin/get-lwin-database) (CC) | 200 000+ viner för sökning och identifiering |
+| [Alkos prislista](https://www.alko.fi/valikoimat-ja-hinnasto/hinnasto) (Finland) | Viner med streckkoder (EAN) – skanning av flaskor som också säljs i Finland ger direkt träff |
+| [Vinmonopolet](https://api.vinmonopolet.no) (Norge, öppet API) | Viner med streckkoder (GTIN), kräver gratis nyckel |
+| [Google Cloud Vision](https://cloud.google.com/vision) | Etikettfoto → text → vinet i registret (gratis upp till 1 000 bilder/månad; appen stannar på 950) |
 | Systembolagets sortiment ([spegel](https://github.com/AlexGustafsson/systembolaget-api-data)) | ~6 000 viner med svenska namn, artikelnummer, pris och årgång. Sök på nummer från hyllkant/kvitto eller klistra in en länk från systembolaget.se. Innehåller inga streckkoder. |
 
 Råden kommer från en regelmotor (`packages/core/src/recommend.ts`) som körs i
@@ -85,6 +88,21 @@ Systembolagets sortiment importeras på samma sätt med
 `'{"action":"systembolaget"}'` som body (valfritt `"url"` till en annan spegel i
 samma format). Kör om när sortimentet ska uppdateras. Från egen dator:
 `npm run systembolaget -w @trand-vine/importers -- assortment.json > sb.sql`.
+
+**Alko:** Alko spärrar automatisk nedladdning. Ladda ner prislistan
+(xlsx) i webbläsaren, lägg upp den i Supabase Storage i hinken `imports`
+(publik) och kör importen med `'{"action":"alko","url":"https://<projekt>.supabase.co/storage/v1/object/public/imports/alkon-hinnasto-tekstitiedostona.xlsx"}'`.
+Lägg till `"dryRun": true` för att först se rubriker och exempel.
+
+**Vinmonopolet:** registrera dig på [api.vinmonopolet.no](https://api.vinmonopolet.no),
+prenumerera på produkten *Open* och lägg nyckeln som hemligheten
+`VINMONOPOLET_API_KEY` (Supabase → Edge Functions → Secrets). Kör sedan
+importen med `'{"action":"vinmonopolet","dryRun":true}'` och därefter utan `dryRun`.
+
+**Etikettfoto:** skapa en API-nyckel för Cloud Vision API i Google Cloud
+(kräver ett faktureringskonto även för gratiskvoten), begränsa nyckeln till
+Cloud Vision API och lägg den som hemligheten `GOOGLE_VISION_API_KEY`.
+Funktionen `read-label` tar emot fotot från appen.
 
 Betygen (21 miljoner rader) är för stora för en funktionskörning; de importeras
 med GitHub-flödet nedan.

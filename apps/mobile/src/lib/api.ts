@@ -91,6 +91,35 @@ export async function lookupBarcode(barcode: string): Promise<ScanResult> {
   return data;
 }
 
+export interface LabelReadResult {
+  text: string;
+  display: string;
+  vintage: number | null;
+  matches: WineRow[];
+}
+
+/** Fel från etikettläsningen som visas med egen text. */
+export class LabelError extends Error {
+  constructor(public code: "not_configured" | "quota" | "failed") {
+    super(code);
+  }
+}
+
+/** Skickar ett foto av etiketten (base64-jpeg) till Google Vision via read-label. */
+export async function readLabel(imageBase64: string): Promise<LabelReadResult> {
+  const { data, error } = await supabase.functions.invoke<LabelReadResult & { error?: string }>("read-label", {
+    body: { image: imageBase64 },
+  });
+  if (error) {
+    // Funktionen svarar med en felkod i JSON även vid 4xx/5xx.
+    const ctx = (error as { context?: Response }).context;
+    const code = await ctx?.json?.().then((b: { error?: string }) => b.error).catch(() => undefined);
+    throw new LabelError(code === "not_configured" || code === "quota" ? code : "failed");
+  }
+  if (!data) throw new LabelError("failed");
+  return data;
+}
+
 export async function getWine(id: string): Promise<WineRow> {
   return check(await supabase.from("wines").select("*").eq("id", id).single()) as WineRow;
 }

@@ -30,7 +30,7 @@ import {
 import { isIsoDate, today } from "../lib/format.ts";
 import { deviceCurrency, useLocale, useT } from "../lib/i18n.tsx";
 import { loadLastChoices, saveLastChoices } from "../lib/prefs.ts";
-import { getAddAgain, getPendingScan, type AddAgain } from "../lib/scanStore.ts";
+import { getAddAgain, getPendingLabel, getPendingScan, type AddAgain, type LabelResult } from "../lib/scanStore.ts";
 
 /**
  * Valt vin: antingen befintligt i registret (med Systembolagets pris m.m. om
@@ -49,6 +49,8 @@ export default function Register() {
   const [scan] = useState<ScanResult | null>(() => getPendingScan());
   // "Lägg till igen" från en flaska: vinet är redan valt.
   const [again] = useState<AddAgain | null>(() => getAddAgain());
+  // Etikettfoto: förslag och årgång från texten på etiketten.
+  const [label] = useState<LabelResult | null>(() => getPendingLabel());
   const [choice, setChoice] = useState<Choice | null>(() => (again ? { kind: "existing", wine: again.wine } : null));
 
   // Känt vin från streckkoden → hoppa direkt till detaljer.
@@ -59,7 +61,7 @@ export default function Register() {
   }, [scan]);
 
   if (!choice) {
-    return <ChooseWine scan={scan} onChoose={setChoice} />;
+    return <ChooseWine scan={scan} label={label} onChoose={setChoice} />;
   }
   const preset = again && choice.kind === "existing" && choice.wine.id === again.wine.id ? again : null;
   return (
@@ -68,16 +70,18 @@ export default function Register() {
       scan={scan}
       choice={choice}
       preset={preset}
+      labelVintage={label?.vintage ?? null}
       onBack={scan?.status === "known" ? undefined : () => setChoice(null)}
       t={t}
     />
   );
 }
 
-function ChooseWine({ scan, onChoose }: { scan: ScanResult | null; onChoose: (c: Choice) => void }) {
+function ChooseWine({ scan, label, onChoose }: { scan: ScanResult | null; label: LabelResult | null; onChoose: (c: Choice) => void }) {
   const t = useT();
   const locale = useLocale();
-  const [query, setQuery] = useState("");
+  // Med etikettfoto står den lästa texten i sökrutan, så att den går att justera.
+  const [query, setQuery] = useState(label && !label.matches.length ? label.display : "");
   const [results, setResults] = useState<WineRow[]>([]);
   const [offers, setOffers] = useState<Map<string, SystembolagetOffer>>(new Map());
   const [external, setExternal] = useState<WineCandidate[]>([]);
@@ -137,6 +141,15 @@ function ChooseWine({ scan, onChoose }: { scan: ScanResult | null; onChoose: (c:
       {scan?.status === "not_found" && <Body muted>{t("notFound")}</Body>}
       {scan?.status === "invalid_barcode" && <Body muted>{t("invalidBarcode")}</Body>}
 
+      {label && (
+        <>
+          <T variant="label">{t("fromLabel")}</T>
+          {!label.matches.length && <Body muted>{t("labelNoMatch")}</Body>}
+          {label.matches.map((w) => (
+            <WineCard key={`label:${w.id}`} title={[w.producer, w.name].filter(Boolean).join(" – ")} subtitle={[w.region, w.country].filter(Boolean).join(", ")} onPress={() => onChoose({ kind: "existing", wine: w })} />
+          ))}
+        </>
+      )}
       {registry.map((w) => (
         <WineCard key={w.id} title={[w.producer, w.name].filter(Boolean).join(" – ")} subtitle={[w.region, w.country].filter(Boolean).join(", ")} onPress={() => onChoose({ kind: "existing", wine: w })} />
       ))}
@@ -226,12 +239,14 @@ function BottleDetails({
   scan,
   choice,
   preset,
+  labelVintage,
   onBack,
   t,
 }: {
   scan: ScanResult | null;
   choice: Choice;
   preset: AddAgain | null;
+  labelVintage: number | null;
   onBack?: () => void;
   t: ReturnType<typeof useT>;
 }) {
@@ -245,8 +260,9 @@ function BottleDetails({
 
   const [history, setHistory] = useState<HistoryRow[]>([]);
   // Förifyllt i första hand från flaskan som läggs till igen, sedan från
-  // Systembolaget och sist från streckkodskällan.
-  const startYear = preset ? preset.year : (offer?.vintage ?? candidate?.vintage ?? null);
+  // etiketten, Systembolaget och sist från streckkodskällan.
+  // Årgång tryckt på etiketten går före Systembolagets (som kan vara en annan årgång).
+  const startYear = preset ? preset.year : (labelVintage ?? offer?.vintage ?? candidate?.vintage ?? null);
   const startSize = [preset?.sizeMl, offer?.volume_ml, candidate?.bottleSizeMl].find((s) => s && SIZES.includes(s)) ?? 750;
   const [year, setYear] = useState(startYear ? String(startYear) : "");
   const [nonVintage, setNonVintage] = useState(!!preset && preset.year === null);

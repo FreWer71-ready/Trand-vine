@@ -24,6 +24,17 @@ begin
     = (999::numeric(10,2), 2018::smallint, 750), 'pris, årgång och storlek';
 end $$;
 
+-- Källor med streckkoder: vin + streckkod, omkörning uppdaterar, befintlig koppling behålls.
+do $$ begin perform private.import_external('alko', '[{"ref":"906458","eans":["7350084980013","4006381333931"],"name":"Fair & Square Red","producer":"La Riojana","country":"Argentina","region":"La Rioja","color":"red","grapes":["Syrah"],"abv":13,"vintage":2024,"volumeMl":750}]'::jsonb); end $$;
+do $$ begin perform private.import_external('alko', '[{"ref":"906458","eans":["7350084980013"],"name":"Fair and Square Red","producer":"La Riojana","country":"Argentina","region":null,"color":"red","grapes":[],"abv":13,"vintage":null,"volumeMl":750}]'::jsonb); end $$;
+do $$
+begin
+  assert (select count(*) from wines where source = 'alko') = 1, 'Alko: ett vin';
+  assert (select name from wines where source = 'alko') = 'Fair and Square Red', 'Alko: uppdaterat namn';
+  assert (select w.source from wine_barcodes b join wines w on w.id = b.wine_id where b.ean = '7350084980013') = 'alko', 'Alko: streckkod';
+  assert (select w.source from wine_barcodes b join wines w on w.id = b.wine_id where b.ean = '4006381333931') = 'xwines', 'befintlig koppling behålls';
+end $$;
+
 -- Sökning som inloggad användare: kort nummer (hyllkant), långt nummer (webbadress) och namn.
 set role authenticated;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
@@ -33,6 +44,11 @@ begin
   assert (select name from search_wines(' 5570901 ') limit 1) = 'Amarone della Valpolicella', 'långt artikelnummer';
   assert (select count(*) from search_wines('commandaria')) = 1, 'sökning på namn';
   assert (select count(*) from systembolaget_products) = 3, 'användare läser artiklar';
+  begin
+    perform private.import_external('alko', '[]'::jsonb);
+    raise exception 'borde nekas: extern import som användare';
+  exception when insufficient_privilege then null;
+  end;
   begin
     perform private.import_systembolaget('[]'::jsonb);
     raise exception 'borde nekas: import som användare';

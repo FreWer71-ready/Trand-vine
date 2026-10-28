@@ -5,10 +5,10 @@ import { router, useIsFocused } from "expo-router";
 import { useRef, useState } from "react";
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 import { Body, Button, ErrorText, Field, Loading, Screen, T } from "../../components/ui.tsx";
-import { lookupBarcode } from "../../lib/api.ts";
+import { LabelError, lookupBarcode, readLabel } from "../../lib/api.ts";
 import { cameraRemembered, rememberCamera } from "../../lib/cameraConsent.ts";
 import { useT } from "../../lib/i18n.tsx";
-import { openManualAdd, setPendingScan } from "../../lib/scanStore.ts";
+import { openManualAdd, setPendingLabel, setPendingScan } from "../../lib/scanStore.ts";
 import { useTheme } from "../../lib/theme.tsx";
 
 export default function Scan() {
@@ -23,6 +23,27 @@ export default function Scan() {
   const [typed, setTyped] = useState("");
   // Kameran rapporterar samma kod många gånger per sekund.
   const handling = useRef(false);
+  const camera = useRef<CameraView>(null);
+  const [reading, setReading] = useState(false);
+
+  // Etikettfoto: när streckkoden saknas eller inte ger träff.
+  async function photoLabel() {
+    if (!camera.current || reading) return;
+    setReading(true);
+    setError(null);
+    try {
+      const pic = await camera.current.takePictureAsync({ base64: true, quality: 0.6 });
+      if (!pic?.base64) throw new LabelError("failed");
+      const result = await readLabel(pic.base64);
+      setPendingLabel({ display: result.display, vintage: result.vintage, matches: result.matches });
+      router.push("/register");
+    } catch (e) {
+      const code = e instanceof LabelError ? e.code : "failed";
+      setError(t(code === "not_configured" ? "labelNotConfigured" : code === "quota" ? "labelQuota" : "labelFailed"));
+    } finally {
+      setReading(false);
+    }
+  }
 
   async function lookUp(code: string) {
     if (handling.current) return;
@@ -87,6 +108,7 @@ export default function Scan() {
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       {focused && (
         <CameraView
+          ref={camera}
           style={StyleSheet.absoluteFill}
           facing="back"
           barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "itf14"] }}
@@ -101,10 +123,15 @@ export default function Scan() {
       )}
       <View style={styles.overlay}>
         <View style={styles.frame} />
-        <Text style={[styles.hint, { fontFamily: theme.fonts.heading.native }]}>{busy ? t("lookingUp") : t("pointAtBarcode")}</Text>
-        {busy && <ActivityIndicator color="#fff" />}
+        <Text style={[styles.hint, { fontFamily: theme.fonts.heading.native }]}>
+          {reading ? t("readingLabel") : busy ? t("lookingUp") : t("pointAtBarcode")}
+        </Text>
+        {(busy || reading) && <ActivityIndicator color="#fff" />}
       </View>
-      <View style={[styles.bottom, { backgroundColor: theme.colors.background }]}>{fallback}</View>
+      <View style={[styles.bottom, { backgroundColor: theme.colors.background }]}>
+        <Button title={t("photoLabel")} onPress={() => void photoLabel()} loading={reading} disabled={busy} />
+        {fallback}
+      </View>
     </View>
   );
 }

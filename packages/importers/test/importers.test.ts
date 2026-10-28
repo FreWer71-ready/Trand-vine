@@ -3,6 +3,9 @@ import { Readable } from "node:stream";
 import { describe, expect, it } from "vitest";
 import { mapLwinRow, writeLwinSql } from "../src/lwin.ts";
 import { csvField, pgArray } from "../src/sql.ts";
+import { mapAlkoRows } from "../src/alkoMap.ts";
+import { canonicalEan } from "../src/externalWine.ts";
+import { mapVinmonopoletAll } from "../src/vinmonopoletMap.ts";
 import { mapSystembolaget, mapSystembolagetAll, writeSystembolagetSql } from "../src/systembolaget.ts";
 import { aggregateRatings, mapWine, parsePyList, writeXWinesSql } from "../src/xwines.ts";
 
@@ -105,5 +108,62 @@ describe("Systembolaget", () => {
     const res = writeSystembolagetSql(products, out);
     expect(res.wines).toBe(3);
     expect(out.text).toMatch(/select private\.import_systembolaget\(\$sb\$\[.*\]\$sb\$::jsonb\);/);
+  });
+});
+
+describe("Alko", () => {
+  const header = ["Numero", "Nimi", "Valmistaja", "Pullokoko", "Hinta", "Litrahinta", "Uutuus", "Hinnastojärjestyskoodi",
+    "Tyyppi", "Alatyyppi", "Erityisryhmä", "Oluttyyppi", "Valmistusmaa", "Alue", "Vuosikerta", "Etikettimerkintöjä",
+    "Huomautus", "Rypäleet", "Luonnehdinta", "Pakkaustyyppi", "Suljentatyyppi", "Alkoholi-%", "Hapot g/l", "Sokeri g/l",
+    "Kantavierrep-%", "Väri EBC", "Katkerot EBU", "Energia kcal/100 ml", "Valikoima", "EAN"];
+  const row = (o: Record<string, unknown>) => header.map((h) => o[h] ?? null);
+  const rows: unknown[][] = [
+    ["Alkon hinnasto 28.10.2026"],
+    [],
+    header,
+    row({ Numero: "906458", Nimi: "Fair & Square Red 2024", Valmistaja: "La Riojana", Pullokoko: "0.75 l", Tyyppi: "punaviinit",
+      Valmistusmaa: "Argentiina", Alue: "La Rioja", Vuosikerta: 2024, Rypäleet: "Syrah, Merlot", "Alkoholi-%": 13, EAN: "7350084980013" }),
+    row({ Numero: "1", Nimi: "Lager", Tyyppi: "oluet", EAN: "7350084980013" }),
+    row({ Numero: "2", Nimi: "Porto Tawny", Tyyppi: "jälkiruokaviinit, väkevöidyt ja muut viinit", "Alkoholi-%": 19.5, Pullokoko: "1,5 l", EAN: "123" }),
+  ];
+
+  it("finds the header row and maps wines with barcodes", () => {
+    const wines = mapAlkoRows(rows);
+    expect(wines).toHaveLength(2);
+    expect(wines[0]).toMatchObject({
+      ref: "906458", eans: ["7350084980013"], name: "Fair & Square Red", producer: "La Riojana",
+      country: "Argentina", color: "red", grapes: ["Syrah", "Merlot"], vintage: 2024, volumeMl: 750, abv: 13,
+    });
+    expect(wines[1]).toMatchObject({ color: "fortified", eans: [], volumeMl: 1500 });
+  });
+
+  it("fails clearly when the header is missing", () => {
+    expect(() => mapAlkoRows([["x"]])).toThrow(/rubrikraden/);
+  });
+});
+
+describe("Vinmonopolet", () => {
+  it("maps a product with GTIN, reading fields defensively", () => {
+    const wines = mapVinmonopoletAll([
+      {
+        basic: { productId: "1234501", productShortName: "Barolo 2019", vintage: "2019", volume: 0.75, alcoholContent: 14.5 },
+        logistics: { barcodes: [{ gtin: "07350084980013", isMainGtin: true }], manufacturerName: "Cantina Rossi" },
+        origins: { origin: { country: "Italia", region: "Piemonte" } },
+        classification: { mainProductTypeName: "Rødvin" },
+        ingredients: { grapes: [{ grapeDesc: "Nebbiolo" }] },
+      },
+      { basic: { productId: "9", productShortName: "Akevitt" }, classification: { mainProductTypeName: "Brennevin" } },
+    ]);
+    expect(wines).toEqual([{
+      ref: "1234501", eans: ["7350084980013"], name: "Barolo", producer: "Cantina Rossi", country: "Italy",
+      region: "Piemonte", color: "red", grapes: ["Nebbiolo"], abv: 14.5, vintage: 2019, volumeMl: 750,
+    }]);
+  });
+
+  it("normalizes barcodes like the app does", () => {
+    expect(canonicalEan("012345678905")).toBe("0012345678905");
+    expect(canonicalEan("7350084980013")).toBe("7350084980013");
+    expect(canonicalEan("7350084980014")).toBeNull();
+    expect(canonicalEan(7350084980013)).toBe("7350084980013");
   });
 });
