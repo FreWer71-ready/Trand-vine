@@ -16,21 +16,43 @@ export interface AddAgain {
 
 let again: AddAgain | null = null;
 
+/** Resultat från etikettfoto: förslag, sökord och årgång. */
+export interface LabelResult {
+  display: string;
+  vintage: number | null;
+  matches: WineRow[];
+}
+
+let label: LabelResult | null = null;
+
+export function setPendingLabel(result: LabelResult) {
+  pending = null;
+  again = null;
+  label = result;
+}
+
+export function getPendingLabel(): LabelResult | null {
+  return label;
+}
+
 export function setPendingScan(result: ScanResult | null) {
   pending = result;
   again = null;
+  label = null;
 }
 
 /** Öppnar registreringen utan streckkod: sök eller lägg till vinet för hand. */
 export function openManualAdd() {
   pending = null;
   again = null;
+  label = null;
   router.push("/register");
 }
 
 /** "Lägg till igen": hoppar direkt till detaljerna med vinet förvalt. */
 export function openAddAgain(a: AddAgain) {
   pending = null;
+  label = null;
   again = a;
   router.push("/register");
 }

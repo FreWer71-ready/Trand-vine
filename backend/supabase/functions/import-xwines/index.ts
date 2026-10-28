@@ -6,6 +6,11 @@
 //   { "action": "list" }                       → filerna i mappen
 //   { "action": "wines", "fileId": "…", "skip": 0 } → importerar vinfilen
 //   { "action": "systembolaget", "url": "…" }   → Systembolagets sortiment (JSON)
+//   { "action": "alko", "url": "…", "dryRun": true } → Alkos prislista (xlsx) med streckkoder;
+//                                                  url valfri, t.ex. en egen nedladdad kopia
+//   { "action": "vinmonopolet", "dryRun": true } → Vinmonopolets API (kräver hemligheten
+//                                                  VINMONOPOLET_API_KEY)
+// dryRun visar rubriker och exempel utan att spara något.
 // Räcker inte en körning (funktionerna har begränsad datorkraft) svarar den
 // med var den slutade; kör igen med "skip" satt till det värdet.
 //
@@ -16,6 +21,10 @@ import { CsvParseStream } from "jsr:@std/csv@1/parse-stream";
 import postgres from "npm:postgres@3.4.5";
 import { mapWine, type XWinesWine } from "../../../../packages/importers/src/xwinesMap.ts";
 import { mapSystembolagetAll } from "../../../../packages/importers/src/systembolagetMap.ts";
+import { ALKO_URL, mapAlkoRows } from "../../../../packages/importers/src/alkoMap.ts";
+import { mapVinmonopoletAll, VINMONOPOLET_URL } from "../../../../packages/importers/src/vinmonopoletMap.ts";
+import type { ExternalWine } from "../../../../packages/importers/src/externalWine.ts";
+import * as XLSX from "npm:xlsx@0.18.5";
 
 // Spegel av Systembolagets sortiment (det officiella API:t är nedlagt).
 const SYSTEMBOLAGET_URL =
@@ -118,6 +127,54 @@ async function importSystembolaget(url: string) {
   return { wines: wines.length };
 }
 
+async function importExternal(source: string, wines: ExternalWine[]) {
+  let barcodes = 0;
+  for (let i = 0; i < wines.length; i += BATCH) {
+    const [row] = await sql`
+      select private.import_external(${source}, (${JSON.stringify(wines.slice(i, i + BATCH))}::text)::jsonb) as n`;
+    barcodes += Number(row?.n ?? 0);
+  }
+  return { wines: wines.length, newBarcodes: barcodes, withBarcode: wines.filter((w) => w.eans.length).length };
+}
+
+async function importAlko(url: string, dryRun: boolean) {
+  const res = await fetch(url, { headers: { "User-Agent": "Trand-vine/1.0 (vinregister)" } });
+  if (!res.ok) throw new Error(`Alko svarade ${res.status}. Ladda ner prislistan själv och ange dess adress som "url".`);
+  if ((res.headers.get("content-type") ?? "").includes("text/html")) {
+    throw new Error('Alko svarade med en webbsida i stället för filen. Ladda ner prislistan själv och ange dess adress som "url".');
+  }
+  const book = XLSX.read(new Uint8Array(await res.arrayBuffer()), { type: "array" });
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(book.Sheets[book.SheetNames[0]!]!, { header: 1, raw: true, defval: null });
+  const wines = mapAlkoRows(rows);
+  if (dryRun) {
+    const header = rows.find((r) => r.includes("Numero")) ?? [];
+    return { dryRun: true, rows: rows.length, wines: wines.length, withBarcode: wines.filter((w) => w.eans.length).length, header, sample: wines.slice(0, 3) };
+  }
+  return await importExternal("alko", wines);
+}
+
+async function importVinmonopolet(dryRun: boolean) {
+  const key = Deno.env.get("VINMONOPOLET_API_KEY");
+  if (!key) throw new Error("Hemligheten VINMONOPOLET_API_KEY saknas");
+  const page = 5000;
+  const products: unknown[] = [];
+  for (let start = 0; ; start += page) {
+    const res = await fetch(`${VINMONOPOLET_URL}?maxResults=${page}&start=${start}`, {
+      headers: { "Ocp-Apim-Subscription-Key": key, Accept: "application/json" },
+    });
+    if (!res.ok) throw new Error(`Vinmonopolet svarade ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const batch = await res.json();
+    if (!Array.isArray(batch)) throw new Error(`Oväntat svar från Vinmonopolet: ${JSON.stringify(batch).slice(0, 200)}`);
+    products.push(...batch);
+    if (dryRun || batch.length < page) break;
+  }
+  const wines = mapVinmonopoletAll(products as never[]);
+  if (dryRun) {
+    return { dryRun: true, products: products.length, wines: wines.length, withBarcode: wines.filter((w) => w.eans.length).length, raw: products.slice(0, 2), sample: wines.slice(0, 3) };
+  }
+  return await importExternal("vinmonopolet", wines);
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   const token = req.headers.get("x-import-token") ?? "";
@@ -137,6 +194,15 @@ Deno.serve(async (req) => {
     if (body.action === "systembolaget") {
       const url = typeof body.url === "string" && body.url.startsWith("https://") ? body.url : SYSTEMBOLAGET_URL;
       const result = await importSystembolaget(url);
+      return json({ ...result, seconds: Math.round((Date.now() - started) / 1000) });
+    }
+    if (body.action === "alko") {
+      const url = typeof body.url === "string" && body.url.startsWith("https://") ? body.url : ALKO_URL;
+      const result = await importAlko(url, body.dryRun === true);
+      return json({ ...result, seconds: Math.round((Date.now() - started) / 1000) });
+    }
+    if (body.action === "vinmonopolet") {
+      const result = await importVinmonopolet(body.dryRun === true);
       return json({ ...result, seconds: Math.round((Date.now() - started) / 1000) });
     }
     return json({ error: "unknown_action" }, 400);
