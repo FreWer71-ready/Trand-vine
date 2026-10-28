@@ -7,6 +7,8 @@ import {
   OCCASION_LABELS,
   PHASE_LABELS,
   drinkPhase,
+  sommelierTips,
+  wineKnowledge,
 } from "@trand-vine/core";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -73,6 +75,22 @@ export default function BottleScreen() {
   const rec = recommendationFor(bottle);
   const phase = drinkPhase(rec);
   const inCellar = bottle.status === "in_cellar";
+  // Lär dig mer: druva, område (klimat, jordmån) och sommeliertips.
+  const knowledge = wineKnowledge(
+    { name: wine.name, color: wine.color, grapes: wine.grapes, region: wine.region, appellation: wine.appellation },
+    locale,
+  );
+  const tips = sommelierTips(
+    {
+      color: wine.color,
+      phase,
+      decantMinutes: rec.decantMinutes,
+      servingTempC: rec.servingTempC,
+      aromas: knowledge.grapes.flatMap((g) => g.aromas),
+      bold: rec.decantMinutes >= 30,
+    },
+    locale,
+  );
   // Årgångens betyg om det finns, annars vinets betyg över alla årgångar.
   const rating = bottle.vintages.rating_count > 0
     ? { avg: bottle.vintages.avg_rating, n: bottle.vintages.rating_count }
@@ -130,6 +148,45 @@ export default function BottleScreen() {
       <Heading>{t("occasions")}</Heading>
       <Tags items={rec.occasions.map((o) => OCCASION_LABELS[o][locale])} />
       <Body muted>{t("adviceDisclaimer")}</Body>
+
+      {(knowledge.grapes.length > 0 || knowledge.region) && <Heading>{t("learnMore")}</Heading>}
+      {knowledge.grapes.map((g) => (
+        <Card key={g.name}>
+          <T variant="label">{g.likely ? t("likelyGrape") : t("grape")}</T>
+          <T variant="cardTitle">{g.name}</T>
+          <Body>{g.about}</Body>
+          <T variant="label">{t("aromas")}</T>
+          <Tags items={g.aromas} />
+          <Body muted>{g.structure}</Body>
+          <Body>
+            <T variant="strong">{t("didYouKnow")} </T>
+            {g.fact}
+          </Body>
+        </Card>
+      ))}
+      {knowledge.region && (
+        <Card>
+          <T variant="label">{t("wineRegion")}</T>
+          <T variant="cardTitle">{knowledge.region.name}</T>
+          <T variant="label">{t("climate")}</T>
+          <Body>{knowledge.region.climate}</Body>
+          <T variant="label">{t("soil")}</T>
+          <Body>{knowledge.region.soil}</Body>
+          <T variant="label">{t("wineStyle")}</T>
+          <Body>{knowledge.region.style}</Body>
+          {knowledge.region.fact && (
+            <Body>
+              <T variant="strong">{t("didYouKnow")} </T>
+              {knowledge.region.fact}
+            </Body>
+          )}
+        </Card>
+      )}
+
+      <Heading>{t("sommelierTips")}</Heading>
+      {tips.map((tip) => (
+        <Body key={tip}>• {tip}</Body>
+      ))}
 
       <Heading>{t("acquired")}</Heading>
       <Body>

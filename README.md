@@ -40,7 +40,10 @@ scripts/test-db.sh      Kör databastester mot en temporär lokal Postgres
 | Systembolagets sortiment ([spegel](https://github.com/AlexGustafsson/systembolaget-api-data)) | ~6 000 viner med svenska namn, artikelnummer, pris och årgång. Sök på nummer från hyllkant/kvitto eller klistra in en länk från systembolaget.se. Innehåller inga streckkoder. |
 
 Råden kommer från en regelmotor (`packages/core/src/recommend.ts`) som körs i
-appen – gratis och fungerar offline.
+appen – gratis och fungerar offline. "Lär dig mer" (druvans karaktär och
+aromer, områdets klimat och jordmån, sommeliertips) kommer från
+kunskapsbanken i `packages/core/src/knowledge.ts`, ca 30 druvor och 40 områden
+på svenska och engelska.
 
 ## Kom igång
 
