@@ -15,7 +15,9 @@ export const supabase = createClient(url, anonKey, {
     storage: Platform.OS === "web" ? undefined : AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // Webb: inloggningslänken i Supabases standardmejl öppnar appen med
+    // sessionen i adressen. Koden i mejlet fungerar på alla plattformar.
+    detectSessionInUrl: Platform.OS === "web",
   },
 });
 

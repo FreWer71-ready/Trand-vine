@@ -80,9 +80,11 @@ npx supabase --workdir backend functions deploy lookup-barcode  # streckkodsupps
   `insert into private.admin_emails values ('du@example.com');`) som loggat in
   med e-postkod. Admin ser statistik, skapar och stänger av koder och ger eller
   tar bort tillgång.
-- E-postmallarna **Magic Link** och **Change Email Address** under
-  Authentication → Email Templates ska innehålla `{{ .Token }}` så att koden
-  skickas. Supabases inbyggda e-post klarar bara några mejl i timmen; koppla
+- Med Supabases standardmejl kommer en **länk** som loggar in på webben
+  (kräver att **Authentication → URL Configuration → Site URL** är appens
+  adress, t.ex. `https://trandvine.fred71.se`). Lägg till `{{ .Token }}` i
+  mallarna **Magic Link** och **Change Email Address** så kommer även en
+  sexsiffrig kod, som fungerar i telefonappen. Supabases inbyggda e-post klarar bara några mejl i timmen; koppla
   egen SMTP (t.ex. Resend) under Authentication → SMTP Settings för riktiga
   användare.
 

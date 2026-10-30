@@ -1,6 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Locale } from "@trand-vine/core";
+import { claimPendingTransfer } from "./account.ts";
 import { getProfile, isAdmin, type Profile } from "./api.ts";
 import { deviceLocale } from "./i18n.tsx";
 import { supabase } from "./supabase.ts";
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profileLoaded, setProfileLoaded] = useState(false);
 
   const refreshProfile = useCallback(async () => {
+    await claimPendingTransfer();
     const [p, a] = await Promise.all([getProfile().catch(() => null), isAdmin().catch(() => false)]);
     setProfile(p);
     setAdmin(a);
