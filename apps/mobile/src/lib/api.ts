@@ -166,6 +166,23 @@ export async function searchExternal(q: string): Promise<WineCandidate[]> {
   return off.search!(q.trim());
 }
 
+export interface WdEntry {
+  wikidata_id: string;
+  name_en: string | null;
+  name_sv: string | null;
+  origin_country?: string | null;
+  country?: string | null;
+  wiki_en: string | null;
+  wiki_sv: string | null;
+}
+
+/** Druvor och områden från Wikidata som matchar vinets druvor och område (namn och synonymer). */
+export async function wikidataLookup(grapes: string[], places: string[]): Promise<{ grapes: WdEntry[]; regions: WdEntry[] }> {
+  const { data, error } = await supabase.rpc("wikidata_lookup", { grape_names: grapes, place_names: places });
+  if (error || !data) return { grapes: [], regions: [] };
+  return data as { grapes: WdEntry[]; regions: WdEntry[] };
+}
+
 export async function wineHistory(wineId: string): Promise<HistoryRow[]> {
   return (check(await supabase.rpc("my_wine_history", { target_wine: wineId })) ?? []) as HistoryRow[];
 }

@@ -43,7 +43,12 @@ Råden kommer från en regelmotor (`packages/core/src/recommend.ts`) som körs i
 appen – gratis och fungerar offline. "Lär dig mer" (druvans karaktär och
 aromer, områdets klimat och jordmån, sommeliertips) kommer från
 kunskapsbanken i `packages/core/src/knowledge.ts`, ca 30 druvor och 40 områden
-på svenska och engelska.
+på svenska och engelska. Varje druva och område är faktagranskat mot källor
+(`packages/core/src/knowledgeSources.ts`), som visas som "Läs mer" i appen.
+Druvor och områden utanför kunskapsbanken kompletteras från
+[Wikidata](https://www.wikidata.org) (CC0, ca 700 druvor och 500 områden med
+Wikipedia-länkar) via funktionen `wikidata-sync`; kör den med
+`'{"action":"sync"}'` (samma engångsnyckel som importen) för att uppdatera.
 
 ## Kom igång
 

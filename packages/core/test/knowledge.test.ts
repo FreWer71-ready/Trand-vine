@@ -30,6 +30,19 @@ describe("wineKnowledge", () => {
   });
 });
 
+describe("sources", () => {
+  it("every grape and region has at least one checked source", async () => {
+    const { KNOWLEDGE_SOURCES } = await import("../src/knowledgeSources.ts");
+    const src = await import("node:fs").then((fs) => fs.readFileSync(new URL("../src/knowledge.ts", import.meta.url), "utf8"));
+    const ids = [...src.matchAll(/id: "(\w+)", name/g)].map((m) => m[1]!);
+    expect(ids.length).toBeGreaterThan(60);
+    for (const id of ids) expect(KNOWLEDGE_SOURCES[id]?.length, id).toBeGreaterThan(0);
+    const k = wineKnowledge({ name: "Barolo", grapes: ["Nebbiolo"] }, "sv");
+    expect(k.grapes[0]!.sources[0]).toMatch(/^https:\/\//);
+    expect(k.region!.sources[0]).toMatch(/^https:\/\//);
+  });
+});
+
 describe("sommelierTips", () => {
   it("gives glass, temperature, ageing, tasting, food and storage tips", () => {
     const tips = sommelierTips({ color: "red", phase: "too_young", decantMinutes: 60, servingTempC: [16, 18], aromas: ["rosor", "tjära"], bold: true }, "sv");

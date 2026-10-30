@@ -12,7 +12,7 @@ import {
 } from "@trand-vine/core";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { View } from "react-native";
+import { Linking, Text, View } from "react-native";
 import {
   Body,
   Button,
@@ -31,9 +31,11 @@ import {
 import {
   getBottle,
   takeBottle,
+  wikidataLookup,
   wineHistory,
   wineRating,
   type BottleRow,
+  type WdEntry,
   type HistoryRow,
 } from "../../lib/api.ts";
 import { isIsoDate, recommendationFor, today, wineTitle } from "../../lib/format.ts";
@@ -51,6 +53,7 @@ export default function BottleScreen() {
   const [wineAvg, setWineAvg] = useState<{ avg_rating: number; rating_count: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [consuming, setConsuming] = useState(false);
+  const [wd, setWd] = useState<{ grapes: WdEntry[]; regions: WdEntry[] }>({ grapes: [], regions: [] });
 
   const load = useCallback(async () => {
     try {
@@ -59,6 +62,8 @@ export default function BottleScreen() {
       const [h, r] = await Promise.all([wineHistory(b.vintages.wine_id), wineRating(b.vintages.wine_id)]);
       setHistory(h.filter((x) => x.bottle_id !== b.id));
       setWineAvg(r);
+      const w = b.vintages.wines;
+      setWd(await wikidataLookup(w.grapes, [w.appellation, w.region].filter((x): x is string => !!x)));
     } catch (e) {
       setError(e instanceof Error ? e.message : t("error"));
     }
@@ -80,6 +85,16 @@ export default function BottleScreen() {
     { name: wine.name, color: wine.color, grapes: wine.grapes, region: wine.region, appellation: wine.appellation },
     locale,
   );
+  // Wikidata kompletterar: Wikipedia-länkar och druvor/områden utanför kunskapsbanken.
+  const wdName = (e: WdEntry) => (locale === "sv" ? e.name_sv ?? e.name_en : e.name_en ?? e.name_sv) ?? "";
+  const wdLink = (e: WdEntry) => (locale === "sv" ? e.wiki_sv ?? e.wiki_en : e.wiki_en ?? e.wiki_sv);
+  const known = (name: string) => knowledge.grapes.some((g) => g.name.toLowerCase().includes(name.toLowerCase()));
+  const extraGrapes = wd.grapes.filter((e) => !known(wdName(e)) && !known(e.name_en ?? ""));
+  const withWiki = (sources: string[], entry?: WdEntry) => {
+    const link = entry && wdLink(entry);
+    return link && !sources.includes(link) ? [link, ...sources] : sources;
+  };
+  const wdFor = (name: string) => wd.grapes.find((e) => name.toLowerCase().includes((e.name_en ?? "").toLowerCase()) && e.name_en);
   const tips = sommelierTips(
     {
       color: wine.color,
@@ -149,7 +164,7 @@ export default function BottleScreen() {
       <Tags items={rec.occasions.map((o) => OCCASION_LABELS[o][locale])} />
       <Body muted>{t("adviceDisclaimer")}</Body>
 
-      {(knowledge.grapes.length > 0 || knowledge.region) && <Heading>{t("learnMore")}</Heading>}
+      {(knowledge.grapes.length > 0 || knowledge.region || wd.grapes.length > 0 || wd.regions.length > 0) && <Heading>{t("learnMore")}</Heading>}
       {knowledge.grapes.map((g) => (
         <Card key={g.name}>
           <T variant="label">{g.likely ? t("likelyGrape") : t("grape")}</T>
@@ -162,6 +177,7 @@ export default function BottleScreen() {
             <T variant="strong">{t("didYouKnow")} </T>
             {g.fact}
           </Body>
+          <Sources urls={withWiki(g.sources, wdFor(g.name))} />
         </Card>
       ))}
       {knowledge.region && (
@@ -180,6 +196,24 @@ export default function BottleScreen() {
               {knowledge.region.fact}
             </Body>
           )}
+          <Sources urls={withWiki(knowledge.region.sources, wd.regions[0])} />
+        </Card>
+      )}
+
+      {extraGrapes.map((e) => (
+        <Card key={e.wikidata_id}>
+          <T variant="label">{t("grape")}</T>
+          <T variant="cardTitle">{wdName(e)}</T>
+          {!!e.origin_country && <Body muted>{t("origin")} {e.origin_country}</Body>}
+          <Sources urls={[wdLink(e)].filter((u): u is string => !!u)} />
+        </Card>
+      ))}
+      {!knowledge.region && wd.regions[0] && (
+        <Card>
+          <T variant="label">{t("wineRegion")}</T>
+          <T variant="cardTitle">{wdName(wd.regions[0])}</T>
+          {!!wd.regions[0].country && <Body muted>{wd.regions[0].country}</Body>}
+          <Sources urls={[wdLink(wd.regions[0])].filter((u): u is string => !!u)} />
         </Card>
       )}
 
@@ -260,6 +294,28 @@ export default function BottleScreen() {
         />
       )}
     </Screen>
+  );
+}
+
+/** "Läs mer"-länkar till källorna som texten kontrollerats mot. */
+function Sources({ urls }: { urls: string[] }) {
+  const t = useT();
+  const theme = useTheme();
+  if (!urls.length) return null;
+  const label = (u: string) => {
+    const host = new URL(u).hostname.replace(/^www\./, "");
+    return host.endsWith("wikipedia.org") ? "Wikipedia" : host;
+  };
+  return (
+    <T variant="muted">
+      {t("readMore")}{" "}
+      {urls.map((u, i) => (
+        <Text key={u} accessibilityRole="link" onPress={() => void Linking.openURL(u)} style={{ color: theme.colors.primary, textDecorationLine: "underline" }}>
+          {label(u)}
+          {i < urls.length - 1 ? ", " : ""}
+        </Text>
+      ))}
+    </T>
   );
 }
 
