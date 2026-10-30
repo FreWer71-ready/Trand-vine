@@ -35,6 +35,14 @@ begin
   assert (select w.source from wine_barcodes b join wines w on w.id = b.wine_id where b.ean = '4006381333931') = 'xwines', 'befintlig koppling behålls';
 end $$;
 
+-- Wikidata: import (två gånger) och uppslag på synonymer utan accenter.
+do $$ begin
+  perform private.import_wikidata('grapes', '[{"id":"Q213332","en":"Zinfandel","sv":"Zinfandel","origin":"Croatia","wikiEn":"https://en.wikipedia.org/wiki/Zinfandel","wikiSv":null,"names":["zinfandel","primitivo","tribidrag","crljenak kastelanski"]}]'::jsonb);
+  perform private.import_wikidata('grapes', '[{"id":"Q213332","en":"Zinfandel","sv":"Zinfandel","origin":"Croatia","wikiEn":"https://en.wikipedia.org/wiki/Zinfandel","wikiSv":"https://sv.wikipedia.org/wiki/Zinfandel","names":["zinfandel","primitivo","tribidrag","crljenak kastelanski"]}]'::jsonb);
+  perform private.import_wikidata('regions', '[{"id":"Q1071629","en":"Rioja","sv":null,"origin":"Spain","wikiEn":"https://en.wikipedia.org/wiki/Rioja_(wine)","wikiSv":null,"names":["rioja","rioja doca"]}]'::jsonb);
+  assert (select count(*) from wd_grapes) = 1, 'Wikidata: en druva';
+end $$;
+
 -- Sökning som inloggad användare: kort nummer (hyllkant), långt nummer (webbadress) och namn.
 set role authenticated;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
@@ -44,6 +52,14 @@ begin
   assert (select name from search_wines(' 5570901 ') limit 1) = 'Amarone della Valpolicella', 'långt artikelnummer';
   assert (select count(*) from search_wines('commandaria')) = 1, 'sökning på namn';
   assert (select count(*) from systembolaget_products) = 3, 'användare läser artiklar';
+  assert (select wikidata_lookup(array['Primitivo'], array['Rioja']) -> 'grapes' -> 0 ->> 'wiki_sv') = 'https://sv.wikipedia.org/wiki/Zinfandel', 'Wikidata: druva via synonym';
+  assert (select wikidata_lookup(array['Crljenak Kaštelanski'], array[]::text[]) -> 'grapes' -> 0 ->> 'name_en') = 'Zinfandel', 'Wikidata: utan accenter';
+  assert (select wikidata_lookup(array[]::text[], array['RIOJA']) -> 'regions' -> 0 ->> 'country') = 'Spain', 'Wikidata: område';
+  begin
+    perform private.import_wikidata('grapes', '[]'::jsonb);
+    raise exception 'borde nekas: wikidata-import som användare';
+  exception when insufficient_privilege then null;
+  end;
   begin
     perform private.import_external('alko', '[]'::jsonb);
     raise exception 'borde nekas: extern import som användare';
