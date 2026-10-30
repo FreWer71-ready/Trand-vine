@@ -78,8 +78,9 @@ npx supabase --workdir backend functions deploy lookup-barcode  # streckkodsupps
   loggar man in och den här enhetens flaskor flyttas dit.
 - **Admin** är e-postadresser i `private.admin_emails` (läggs in med SQL:
   `insert into private.admin_emails values ('du@example.com');`) som loggat in
-  med e-postkod. Admin ser statistik, skapar och stänger av koder och ger eller
-  tar bort tillgång.
+  med e-postkod. Admin ser statistik, skapar och stänger av koder, ger eller
+  tar bort tillgång och kan ta bort användare (funktionen `admin-users`; kontot
+  raderas med källare och betyg, men inte sig själv eller andra admin).
 - Med Supabases standardmejl kommer en **länk** som loggar in på webben
   (kräver att **Authentication → URL Configuration → Site URL** är appens
   adress, t.ex. `https://trandvine.fred71.se`). Lägg till `{{ .Token }}` i
