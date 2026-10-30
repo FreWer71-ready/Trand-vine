@@ -12,7 +12,7 @@ import {
 } from "@trand-vine/core";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { View } from "react-native";
+import { Linking, Text, View } from "react-native";
 import {
   Body,
   Button,
@@ -162,6 +162,7 @@ export default function BottleScreen() {
             <T variant="strong">{t("didYouKnow")} </T>
             {g.fact}
           </Body>
+          <Sources urls={g.sources} />
         </Card>
       ))}
       {knowledge.region && (
@@ -180,6 +181,7 @@ export default function BottleScreen() {
               {knowledge.region.fact}
             </Body>
           )}
+          <Sources urls={knowledge.region.sources} />
         </Card>
       )}
 
@@ -260,6 +262,28 @@ export default function BottleScreen() {
         />
       )}
     </Screen>
+  );
+}
+
+/** "Läs mer"-länkar till källorna som texten kontrollerats mot. */
+function Sources({ urls }: { urls: string[] }) {
+  const t = useT();
+  const theme = useTheme();
+  if (!urls.length) return null;
+  const label = (u: string) => {
+    const host = new URL(u).hostname.replace(/^www\./, "");
+    return host.endsWith("wikipedia.org") ? "Wikipedia" : host;
+  };
+  return (
+    <T variant="muted">
+      {t("readMore")}{" "}
+      {urls.map((u, i) => (
+        <Text key={u} accessibilityRole="link" onPress={() => void Linking.openURL(u)} style={{ color: theme.colors.primary, textDecorationLine: "underline" }}>
+          {label(u)}
+          {i < urls.length - 1 ? ", " : ""}
+        </Text>
+      ))}
+    </T>
   );
 }
 

@@ -8,6 +8,7 @@
 import type { Locale } from "./i18n.ts";
 import type { DrinkPhase } from "./recommend.ts";
 import type { WineColor } from "./types.ts";
+import { KNOWLEDGE_SOURCES } from "./knowledgeSources.ts";
 
 type L = Record<Locale, string>;
 const l = (sv: string, en: string): L => ({ sv, en });
@@ -93,13 +94,13 @@ const GRAPES: GrapeEntry[] = [
   },
   {
     id: "sangiovese", name: "Sangiovese", match: /sangiovese|brunello|prugnolo|morellino/i,
-    about: l("Toscanas själ: druvan bakom Chianti, Brunello di Montalcino och Vino Nobile. Namnet betyder \"Jupiters blod\".",
-      "The soul of Tuscany: the grape behind Chianti, Brunello di Montalcino and Vino Nobile. The name means \"blood of Jupiter\"."),
+    about: l("Toscanas själ: druvan bakom Chianti, Brunello di Montalcino och Vino Nobile. Namnet kommer troligen av sanguis Jovis, \"Jupiters blod\".",
+      "The soul of Tuscany: the grape behind Chianti, Brunello di Montalcino and Vino Nobile. The name probably comes from sanguis Jovis, \"blood of Jupiter\"."),
     aromas: { sv: ["surkörsbär", "tomat", "torkade örter", "te", "läder"], en: ["sour cherry", "tomato leaf", "dried herbs", "tea", "leather"] },
     structure: l("Medelfyllig, hög syra och fasta tanniner – därför så bra till tomatbaserad mat.",
       "Medium body, high acidity and firm tannins – which is why it loves tomato-based food."),
-    fact: l("Brunello är en lokal klon av Sangiovese och måste lagras minst fem år innan försäljning.",
-      "Brunello is a local Sangiovese clone and must be aged at least five years before release."),
+    fact: l("Brunello är en lokal variant av Sangiovese och får säljas först den 1 januari femte året efter skörden, efter minst två år på fat.",
+      "Brunello is a local strain of Sangiovese and may only be released on 1 January of the fifth year after harvest, after at least two years in wood."),
   },
   {
     id: "nebbiolo", name: "Nebbiolo", match: /nebbiolo|spanna|chiavennasca/i,
@@ -121,8 +122,8 @@ const GRAPES: GrapeEntry[] = [
   },
   {
     id: "corvina", name: "Corvina", match: /corvin/i,
-    about: l("Huvuddruvan i Valpolicella och Amarone från Veneto, ofta blandad med Rondinella och Molinara.",
-      "The main grape of Valpolicella and Amarone in the Veneto, usually blended with Rondinella and Molinara."),
+    about: l("Huvuddruvan i Valpolicella och Amarone från Veneto, oftast blandad med Corvinone och Rondinella.",
+      "The main grape of Valpolicella and Amarone in the Veneto, usually blended with Corvinone and Rondinella."),
     aromas: { sv: ["körsbär", "russin", "torkade plommon", "mandel", "kakao"], en: ["cherry", "raisin", "prune", "almond", "cocoa"] },
     structure: l("Lätt som ung Valpolicella, mycket fyllig som Amarone.", "Light as young Valpolicella, very full as Amarone."),
     fact: l("Till Amarone torkas druvorna i 3–4 månader (appassimento) och förlorar en tredjedel av vikten innan de jäses.",
@@ -143,8 +144,8 @@ const GRAPES: GrapeEntry[] = [
       "One grape, two names: Zinfandel in California, Primitivo in Puglia. It ripens unevenly and gives powerful, fruity wines."),
     aromas: { sv: ["björnbär", "russin", "sylt", "kanel", "svartpeppar"], en: ["blackberry", "raisin", "jam", "cinnamon", "black pepper"] },
     structure: l("Fyllig, ofta hög alkohol, mjuka tanniner.", "Full-bodied, often high alcohol, soft tannins."),
-    fact: l("DNA-tester visade att båda härstammar från den kroatiska druvan Crljenak Kaštelanski.",
-      "DNA testing showed both descend from the Croatian grape Crljenak Kaštelanski."),
+    fact: l("DNA-tester visade att båda är samma druva som kroatiska Crljenak Kaštelanski, med det äldsta namnet Tribidrag.",
+      "DNA testing showed both are the same variety as Croatia's Crljenak Kaštelanski, whose oldest name is Tribidrag."),
   },
   {
     id: "gamay", name: "Gamay", match: /gamay/i,
@@ -166,8 +167,8 @@ const GRAPES: GrapeEntry[] = [
   },
   {
     id: "carmenere", name: "Carménère", match: /carm[eé]n[eè]re/i,
-    about: l("Gammal Bordeauxdruva som försvann efter vinlusen och återupptäcktes i Chile 1994, där den länge förväxlats med Merlot.",
-      "An old Bordeaux grape that vanished after phylloxera and was rediscovered in Chile in 1994, long mistaken for Merlot."),
+    about: l("Gammal Bordeauxdruva som nästan försvann efter vinlusen och återupptäcktes i Chile 1994, där den länge förväxlats med Merlot.",
+      "An old Bordeaux grape that all but vanished after phylloxera and was rediscovered in Chile in 1994, long mistaken for Merlot."),
     aromas: { sv: ["mörka bär", "grön paprika", "svartpeppar", "kakao"], en: ["dark berries", "green pepper", "black pepper", "cocoa"] },
     structure: l("Medelfyllig till fyllig, mjuka tanniner.", "Medium to full body, soft tannins."),
     fact: l("Chile har världens största planteringar av Carménère.", "Chile has the world's largest Carménère plantings."),
@@ -241,8 +242,8 @@ const GRAPES: GrapeEntry[] = [
       "Germany's pride, from bone dry to sweet. High acidity keeps even sweet Rieslings fresh and lets them age for decades."),
     aromas: { sv: ["lime", "grönt äpple", "persika", "blommor", "petroleum med ålder"], en: ["lime", "green apple", "peach", "blossom", "petrol with age"] },
     structure: l("Lätt till medelfyllig, mycket hög syra, låg alkohol.", "Light to medium body, very high acidity, low alcohol."),
-    fact: l("Petroleumdoften i mogen Riesling kommer från ämnet TDN och räknas som ett kvalitetstecken.",
-      "The petrol note in mature Riesling comes from a compound called TDN and is seen as a sign of quality."),
+    fact: l("Petroleumdoften i mogen Riesling kommer från ämnet TDN; många uppskattar den, medan andra ser den som en defekt.",
+      "The petrol note in mature Riesling comes from a compound called TDN; many prize it, while others regard it as a flaw."),
   },
   {
     id: "chenin_blanc", name: "Chenin Blanc", match: /chenin|steen/i,
@@ -264,7 +265,7 @@ const GRAPES: GrapeEntry[] = [
     id: "gewurztraminer", name: "Gewürztraminer", match: /gew[uü]rztraminer|traminer/i,
     about: l("Mycket aromatisk druva, bäst i Alsace. Ofta fyllig med låg syra och en aning sötma.",
       "A highly aromatic grape, at its best in Alsace. Often full with low acidity and a touch of sweetness."),
-    aromas: { sv: ["litchi", "ros", "ingefära", "turkisk peppar"], en: ["lychee", "rose", "ginger", "Turkish delight"] },
+    aromas: { sv: ["litchi", "ros", "ingefära", "rosenlokum"], en: ["lychee", "rose", "ginger", "Turkish delight"] },
     structure: l("Fyllig, låg syra.", "Full-bodied, low acidity."),
     fact: l("Gewürz betyder krydda på tyska.", "Gewürz means spice in German."),
   },
@@ -313,7 +314,7 @@ const GRAPES: GrapeEntry[] = [
   },
   {
     id: "muscat", name: "Muscat / Moscato", match: /muscat|moscato|moscatel/i,
-    about: l("En av de äldsta druvfamiljerna. Det enda vin som doftar som själva druvan.", "One of the oldest grape families – the only wine that smells like the grape itself."),
+    about: l("En av de äldsta druvfamiljerna, och ett av få viner som doftar som själva druvan.", "One of the oldest grape families – and one of the few wines that smell like the grape itself."),
     aromas: { sv: ["vindruva", "apelsinblom", "persika", "ros"], en: ["grape", "orange blossom", "peach", "rose"] },
     structure: l("Från lätt och söt (Moscato d'Asti) till fyllig och starkvinslik.", "From light and sweet (Moscato d'Asti) to rich and fortified."),
     fact: l("Moscato d'Asti har bara omkring 5 % alkohol eftersom jäsningen stoppas tidigt.",
@@ -335,8 +336,8 @@ const GRAPES: GrapeEntry[] = [
 const REGIONS: RegionEntry[] = [
   {
     id: "barolo", name: "Barolo & Barbaresco", match: /\b(barolo|barbaresco)\b/i, grapes: ["nebbiolo"],
-    climate: l("Kontinentalt med kalla vintrar och varma somrar. Höstdimman från Alperna ger långsam mognad.",
-      "Continental, with cold winters and warm summers. Autumn fog from the Alps slows ripening."),
+    climate: l("Kontinentalt med kalla vintrar och varma somrar. Höstdimman (nebbia) i dalarna ger långsam mognad.",
+      "Continental, with cold winters and warm summers. Autumn fog (nebbia) in the valleys slows ripening."),
     soil: l("Kalkrik märgel från havsbotten. Mjukare jord (tortonian) i La Morra ger parfym; hårdare (serravallian) i Serralunga ger kraft och struktur.",
       "Lime-rich marine marl. Softer Tortonian soils in La Morra give perfume; harder Serravallian soils in Serralunga give power and structure."),
     style: l("Barolo lagras minst 38 månader, varav 18 på fat. Vinerna är ljusa men tanninrika och utvecklas i 20+ år.",
@@ -356,8 +357,8 @@ const REGIONS: RegionEntry[] = [
     soil: l("Kalksten, lera och vulkanisk basalt på kullarna norr om Verona.", "Limestone, clay and volcanic basalt on the hills north of Verona."),
     style: l("Fyra stilar: lätt Valpolicella, Ripasso (jäst på Amarone-skal), mäktig torr Amarone och söt Recioto – de två sista av torkade druvor.",
       "Four styles: light Valpolicella, Ripasso (refermented on Amarone skins), powerful dry Amarone and sweet Recioto – the last two from dried grapes."),
-    fact: l("Amarone betyder ungefär \"den stora bittra\" – den uppstod när en Recioto av misstag jäste torr.",
-      "Amarone roughly means \"the great bitter one\" – it was born when a Recioto accidentally fermented dry."),
+    fact: l("Amarone betyder ungefär \"den stora bittra\" – enligt legenden uppstod den när en Recioto av misstag jäste torr.",
+      "Amarone roughly means \"the great bitter one\" – according to legend it was born when a Recioto accidentally fermented dry."),
   },
   {
     id: "prosecco", name: "Prosecco", match: /prosecco|valdobbiadene|conegliano/i, grapes: ["glera"],
@@ -371,8 +372,8 @@ const REGIONS: RegionEntry[] = [
     id: "brunello", name: "Montalcino", match: /brunello|montalcino/i, grapes: ["sangiovese"],
     climate: l("Varmare och torrare än Chianti; Monte Amiata skyddar mot oväder.", "Warmer and drier than Chianti; Monte Amiata shelters it from storms."),
     soil: l("Galestro (skiffrig lerskiffer) högre upp, mer lera och sand längre ned.", "Galestro (flaky schist) higher up, more clay and sand lower down."),
-    style: l("Brunello av 100 % Sangiovese, lagras minst fem år. Rosso di Montalcino är den yngre lillebrodern.",
-      "Brunello is 100% Sangiovese aged at least five years. Rosso di Montalcino is the younger sibling."),
+    style: l("Brunello görs av 100 % Sangiovese och får säljas tidigast femte året efter skörden. Rosso di Montalcino är den yngre lillebrodern.",
+      "Brunello is 100% Sangiovese and cannot be released until the fifth year after harvest. Rosso di Montalcino is the younger sibling."),
   },
   {
     id: "chianti", name: "Chianti", match: /chianti/i, grapes: ["sangiovese"],
@@ -391,11 +392,11 @@ const REGIONS: RegionEntry[] = [
   },
   {
     id: "etna", name: l("Etna & Sicilien", "Etna & Sicily"), match: /\betna\b|sicili|sicily/i, grapes: ["nero_davola"],
-    climate: l("Varmt medelhavsklimat; på Etna ger höjden (upp till 1 000 m) svala nätter.", "Hot Mediterranean; on Etna altitude (up to 1,000 m) gives cool nights."),
+    climate: l("Varmt medelhavsklimat; på Etna ger höjden (upp till drygt 1 000 m) svala nätter.", "Hot Mediterranean; on Etna altitude (up to just over 1,000 m) gives cool nights."),
     soil: l("På Etna svart vulkanisk jord och lava, som ger rökig mineralitet.", "On Etna black volcanic soil and lava, which give smoky minerality."),
     style: l("Nero d'Avola ger fylliga röda; Etna Rosso (Nerello Mascalese) är elegant, nästan som Pinot Noir.",
       "Nero d'Avola gives full reds; Etna Rosso (Nerello Mascalese) is elegant, almost Pinot-like."),
-    fact: l("Många vinstockar på Etna överlevde vinlusen och är över 100 år gamla.", "Many vines on Etna survived phylloxera and are over 100 years old."),
+    fact: l("En del vinstockar på Etna överlevde vinlusen och är över 100 år gamla.", "Some vines on Etna survived phylloxera and are over 100 years old."),
   },
   {
     id: "puglia", name: l("Apulien", "Puglia"), match: /puglia|apulien|salento|manduria/i, grapes: ["zinfandel"],
@@ -414,7 +415,7 @@ const REGIONS: RegionEntry[] = [
   },
   {
     id: "ribera", name: "Ribera del Duero & Toro", match: /ribera del duero|\btoro\b|kastilien|castilla/i, grapes: ["tempranillo"],
-    climate: l("Extremt kontinentalt på 800–900 m höjd: heta dagar och iskalla nätter.", "Extreme continental at 800–900 m: hot days and icy nights."),
+    climate: l("Extremt kontinentalt på 600–1 000 m höjd: heta dagar och iskalla nätter.", "Extreme continental at 600–1,000 m: hot days and icy nights."),
     soil: l("Kalk och lera med inslag av sand längs floden Duero.", "Limestone and clay with sand along the Duero river."),
     style: l("Kraftfulla, mörka Tempranillo (Tinto Fino) med mycket struktur.", "Powerful, dark Tempranillo (Tinto Fino) with lots of structure."),
     fact: l("Vega Sicilia, ett av Spaniens mest berömda viner, kommer härifrån.", "Vega Sicilia, one of Spain's most famous wines, comes from here."),
@@ -469,7 +470,7 @@ const REGIONS: RegionEntry[] = [
       "Limestone and marl along a long east-facing slope. Small differences between vineyards (climats) make big differences in the wine."),
     style: l("Pinot Noir och Chardonnay. Kvalitetsstege: Bourgogne → by (t.ex. Pommard) → Premier Cru → Grand Cru.",
       "Pinot Noir and Chardonnay. Quality ladder: Bourgogne → village (e.g. Pommard) → Premier Cru → Grand Cru."),
-    fact: l("Bourgognes vingårdar (climats) är med på Unescos världsarvslista.", "Burgundy's vineyards (climats) are a UNESCO World Heritage site."),
+    fact: l("Climats på Côte de Nuits och Côte de Beaune är sedan 2015 med på Unescos världsarvslista.", "The climats of the Côte de Nuits and Côte de Beaune have been a UNESCO World Heritage site since 2015."),
   },
   {
     id: "sauternes", name: "Sauternes", match: /sauternes|barsac/i, grapes: ["semillon", "sauvignon_blanc"],
@@ -489,8 +490,8 @@ const REGIONS: RegionEntry[] = [
   {
     id: "bordeaux_right", name: l("Bordeaux högra stranden", "Bordeaux Right Bank"), match: /saint-[eé]milion|st-[eé]milion|pomerol|fronsac|castillon/i, grapes: ["merlot", "cabernet_franc"],
     climate: l("Måttligt atlantklimat.", "Moderate Atlantic climate."),
-    soil: l("Lera och kalksten, som håller kyla och fukt – Merlot trivs. Pomerol har järnrik blå lera.",
-      "Clay and limestone, which stay cool and moist – Merlot thrives. Pomerol has iron-rich blue clay."),
+    soil: l("Lera och kalksten, som håller kyla och fukt – Merlot trivs. Pomerol har blå lera och en järnrik alv (crasse de fer).",
+      "Clay and limestone, which stay cool and moist – Merlot thrives. Pomerol has blue clay and an iron-rich subsoil (crasse de fer)."),
     style: l("Merlotdominerade, mjukare och tidigare drickbara än vänstra stranden.", "Merlot-led, softer and approachable earlier than the Left Bank."),
   },
   {
@@ -510,8 +511,8 @@ const REGIONS: RegionEntry[] = [
   {
     id: "rhone_south", name: l("Södra Rhône", "Southern Rhône"), match: /ch[aâ]teauneuf|gigondas|vacqueyras|c[oô]tes du rh[oô]ne|rh[oô]ne|tavel|lirac/i, grapes: ["grenache", "syrah", "mourvedre"],
     climate: l("Varmt medelhavsklimat med den kalla, torra vinden mistralen.", "Warm Mediterranean climate with the cold, dry mistral wind."),
-    soil: l("I Châteauneuf-du-Pape stora runda stenar (galets roulés) som lagrar dagens värme och släpper den på natten.",
-      "In Châteauneuf-du-Pape large round stones (galets roulés) store the day's heat and release it at night."),
+    soil: l("I Châteauneuf-du-Pape stora runda stenar (galets roulés), som sägs lagra dagens värme och släppa den på natten.",
+      "In Châteauneuf-du-Pape large round stones (galets roulés), said to store the day's heat and release it at night."),
     style: l("Blandningar med Grenache i spetsen; upp till 13 druvor är tillåtna i Châteauneuf-du-Pape.",
       "Grenache-led blends; up to 13 grapes are allowed in Châteauneuf-du-Pape."),
   },
@@ -549,8 +550,8 @@ const REGIONS: RegionEntry[] = [
     soil: l("Blå och röd skiffer som lagrar värme och ger en rökig, mineralisk ton.", "Blue and red slate that stores heat and gives a smoky, mineral note."),
     style: l("Lätta, eleganta Riesling med låg alkohol, från torra (trocken) till söta (Auslese).",
       "Light, elegant, low-alcohol Riesling, from dry (trocken) to sweet (Auslese)."),
-    fact: l("Calmont i Mosel är en av Europas brantaste vingårdar, med upp till 65 % lutning.",
-      "The Calmont in the Mosel is one of Europe's steepest vineyards, up to a 65% slope."),
+    fact: l("Calmont i Mosel räknas som en av Europas brantaste vingårdar.",
+      "The Calmont in the Mosel is counted among Europe's steepest vineyards."),
   },
   {
     id: "germany", name: l("Tyskland", "Germany"), match: /rheingau|pfalz|rheinhessen|nahe|baden|franken|w[uü]rttemberg/i, grapes: ["riesling", "pinot_noir"],
@@ -623,8 +624,8 @@ const REGIONS: RegionEntry[] = [
     id: "south_africa", name: l("Sydafrika", "South Africa"), match: /stellenbosch|swartland|paarl|franschhoek|constantia|western cape|sydafrika|south africa/i, grapes: ["chenin_blanc", "pinotage"],
     climate: l("Medelhavsklimat, svalkat av två hav och vinden Cape Doctor.", "Mediterranean, cooled by two oceans and the Cape Doctor wind."),
     soil: l("Granit, sandsten och skiffer – några av världens äldsta vinjordar.", "Granite, sandstone and shale – some of the world's oldest vineyard soils."),
-    style: l("Chenin Blanc, Pinotage och Bordeauxblandningar; Swartland är känt för naturliga, gamla stockar.",
-      "Chenin Blanc, Pinotage and Bordeaux blends; the Swartland is known for natural wines from old vines."),
+    style: l("Chenin Blanc, Pinotage och Bordeauxblandningar; Swartland är känt för gamla stockar och vinmakning med minimal inblandning.",
+      "Chenin Blanc, Pinotage and Bordeaux blends; the Swartland is known for old vines and low-intervention winemaking."),
   },
 ];
 
@@ -641,6 +642,8 @@ export interface GrapeKnowledge {
   aromas: string[];
   structure: string;
   fact: string;
+  /** Källor som texten kontrollerats mot ("Läs mer"). */
+  sources: string[];
 }
 
 export interface RegionKnowledge {
@@ -649,6 +652,7 @@ export interface RegionKnowledge {
   soil: string;
   style: string;
   fact: string | null;
+  sources: string[];
 }
 
 export interface KnowledgeInput {
@@ -691,6 +695,7 @@ export function wineKnowledge(input: KnowledgeInput, locale: Locale): WineKnowle
       aromas: g.aromas[locale],
       structure: g.structure[locale],
       fact: g.fact[locale],
+      sources: KNOWLEDGE_SOURCES[g.id] ?? [],
     })),
     region: region && {
       name: typeof region.name === "string" ? region.name : region.name[locale],
@@ -698,6 +703,7 @@ export function wineKnowledge(input: KnowledgeInput, locale: Locale): WineKnowle
       soil: region.soil[locale],
       style: region.style[locale],
       fact: region.fact?.[locale] ?? null,
+      sources: KNOWLEDGE_SOURCES[region.id] ?? [],
     },
   };
 }
