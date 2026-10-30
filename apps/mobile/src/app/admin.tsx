@@ -6,6 +6,7 @@ import { Platform, View } from "react-native";
 import { Body, Button, Card, Chips, ErrorText, Field, Heading, Loading, Screen, T } from "../components/ui.tsx";
 import {
   adminCreateCode,
+  adminDeleteUser,
   adminOverview,
   adminSetCodeActive,
   adminSetUserAccess,
@@ -22,7 +23,9 @@ const inviteLink = (code: string) =>
 
 export default function Admin() {
   const t = useT();
-  const { admin } = useAuth();
+  const { admin, session } = useAuth();
+  // Borttagning kräver två tryck: först "Ta bort", sedan "Bekräfta".
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [data, setData] = useState<AdminOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState("");
@@ -135,6 +138,23 @@ export default function Admin() {
             variant="secondary"
             onPress={() => act(() => adminSetUserAccess(u.id, !u.approved_at))}
           />
+          {u.id !== session?.user.id &&
+            (confirmDelete === u.id ? (
+              <>
+                <Body>{t("adminDeleteWarning", { n: u.bottles })}</Body>
+                <Button
+                  title={t("adminDeleteConfirm")}
+                  loading={busy}
+                  onPress={() => act(async () => {
+                    await adminDeleteUser(u.id);
+                    setConfirmDelete(null);
+                  })}
+                />
+                <Button title={t("cancel")} variant="secondary" onPress={() => setConfirmDelete(null)} />
+              </>
+            ) : (
+              <Button title={t("adminDelete")} variant="secondary" onPress={() => setConfirmDelete(u.id)} />
+            ))}
         </Card>
       ))}
     </Screen>

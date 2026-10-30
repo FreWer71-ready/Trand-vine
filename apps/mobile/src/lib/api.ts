@@ -389,6 +389,16 @@ export async function adminSetCodeActive(code: string, active: boolean) {
   check(await supabase.rpc("admin_set_code_active", { target: code, is_active: active }));
 }
 
+/** Tar bort kontot med källare och betyg (serverfunktionen admin-users). */
+export async function adminDeleteUser(userId: string) {
+  const { error } = await supabase.functions.invoke("admin-users", { body: { action: "delete", userId } });
+  if (error) {
+    const ctx = (error as { context?: Response }).context;
+    const msg = await ctx?.json?.().then((b: { error?: string }) => b.error).catch(() => undefined);
+    throw new Error(msg ?? error.message);
+  }
+}
+
 export async function adminSetUserAccess(userId: string, access: boolean) {
   check(await supabase.rpc("admin_set_user_access", { target: userId, has_access: access }));
 }
