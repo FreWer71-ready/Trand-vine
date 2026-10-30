@@ -1,8 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Locale } from "@trand-vine/core";
-import { getProfile, type Profile } from "./api.ts";
-import { LOGIN_ENABLED } from "./config.ts";
+import { getProfile, isAdmin, type Profile } from "./api.ts";
 import { deviceLocale } from "./i18n.tsx";
 import { supabase } from "./supabase.ts";
 
@@ -13,6 +12,9 @@ interface AuthState {
   /** Fel vid anonym inloggning, t.ex. om den inte är påslagen i Supabase. */
   error: string | null;
   locale: Locale;
+  /** Har löst in en inbjudningskod (eller är admin). */
+  approved: boolean;
+  admin: boolean;
   refreshProfile(): Promise<void>;
 }
 
@@ -23,15 +25,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [admin, setAdmin] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   const refreshProfile = useCallback(async () => {
-    setProfile(await getProfile().catch(() => null));
+    const [p, a] = await Promise.all([getProfile().catch(() => null), isAdmin().catch(() => false)]);
+    setProfile(p);
+    setAdmin(a);
+    setProfileLoaded(true);
   }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       let current = data.session;
-      if (!current && !LOGIN_ENABLED) {
+      if (!current) {
         const res = await supabase.auth.signInAnonymously();
         if (res.error) setError(res.error.message);
         current = res.data.session;
@@ -44,13 +51,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    setProfileLoaded(false);
     if (session) void refreshProfile();
     else setProfile(null);
   }, [session?.user.id, refreshProfile]);
 
   return (
     <AuthContext.Provider
-      value={{ session, profile, loading, error, locale: profile?.locale ?? deviceLocale(), refreshProfile }}
+      value={{
+        session,
+        profile,
+        loading: loading || (!!session && !profileLoaded),
+        error,
+        locale: profile?.locale ?? deviceLocale(),
+        approved: !!profile?.approved_at || admin,
+        admin,
+        refreshProfile,
+      }}
     >
       {children}
     </AuthContext.Provider>

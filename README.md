@@ -66,14 +66,25 @@ npx supabase --workdir backend db push                          # schema
 npx supabase --workdir backend functions deploy lookup-barcode  # streckkodsuppslag
 ```
 
-**Inloggning är avstängd tills vidare.** Appen loggar in varje enhet anonymt,
-så slå på **Authentication → Sign In / Providers → Allow anonymous sign-ins**
-i Supabase. Källaren hör då till enheten/webbläsaren.
+**Konton och inbjudningskod** (som festkoden i Fredrik55):
 
-För att slå på inloggning med e-postkod igen: sätt `EXPO_PUBLIC_LOGIN_ENABLED=true`
-(i `.env` och i Vercel) och lägg till `{{ .Token }}` i mallen under
-**Authentication → Email Templates → Magic Link**. Koden finns kvar i
-`apps/mobile/src/app/sign-in.tsx`.
+- Varje enhet startar som anonym användare (slå på **Authentication → Sign In /
+  Providers → Allow anonymous sign-ins**).
+- Appen kräver en **inbjudningskod** innan man kan lägga till något. Koden
+  skapas av admin under Profil → Admin och kan delas som länk (`/?kod=…`).
+  Databasen spärrar allt utan godkänd kod (restriktiva RLS-policyer).
+- Under Profil sparar man källaren med **e-post och engångskod**: det anonyma
+  kontot blir permanent (samma id, källaren följer med). Finns kontot redan
+  loggar man in och den här enhetens flaskor flyttas dit.
+- **Admin** är e-postadresser i `private.admin_emails` (läggs in med SQL:
+  `insert into private.admin_emails values ('du@example.com');`) som loggat in
+  med e-postkod. Admin ser statistik, skapar och stänger av koder och ger eller
+  tar bort tillgång.
+- E-postmallarna **Magic Link** och **Change Email Address** under
+  Authentication → Email Templates ska innehålla `{{ .Token }}` så att koden
+  skickas. Supabases inbyggda e-post klarar bara några mejl i timmen; koppla
+  egen SMTP (t.ex. Resend) under Authentication → SMTP Settings för riktiga
+  användare.
 
 ### 2. Importera vindata (valfritt men rekommenderat)
 

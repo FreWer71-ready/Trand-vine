@@ -82,6 +82,12 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   const user = userId(req);
   if (!user) return json({ error: "unauthorized" }, 401);
+  // Bara den som löst in en inbjudningskod (eller är admin), som i appen.
+  const [access] = await sql`
+    select coalesce((select approved_at is not null from public.profiles where id = ${user}), false)
+        or exists (select 1 from auth.users u join private.admin_emails a on a.email = lower(u.email)
+                   where u.id = ${user} and u.email_confirmed_at is not null) as ok`;
+  if (!access?.ok) return json({ error: "not_approved" }, 403);
   const key = Deno.env.get("GOOGLE_VISION_API_KEY");
   if (!key) return json({ error: "not_configured" }, 503);
 
