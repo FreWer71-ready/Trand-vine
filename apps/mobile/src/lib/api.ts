@@ -311,6 +311,86 @@ export interface Profile {
   id: string;
   display_name: string;
   locale: "sv" | "en";
+  /** Satt när inbjudningskoden lösts in (eller av admin). */
+  approved_at: string | null;
+  invite_code: string | null;
+}
+
+// Inbjudningskod och konto -----------------------------------------------------
+
+export type RedeemResult = "ok" | "invalid" | "used_up" | "expired" | "too_many_attempts";
+
+export async function redeemInvite(code: string): Promise<RedeemResult> {
+  return check(await supabase.rpc("redeem_invite", { input: code })) as RedeemResult;
+}
+
+export async function isAdmin(): Promise<boolean> {
+  const { data } = await supabase.rpc("is_admin");
+  return data === true;
+}
+
+/** Biljett som låter ett befintligt konto ta över den anonyma enhetens flaskor. */
+export async function createTransferTicket(): Promise<string | null> {
+  const { data } = await supabase.rpc("create_transfer_ticket");
+  return (data as string | null) ?? null;
+}
+
+export async function claimTransfer(ticket: string): Promise<number> {
+  const { data } = await supabase.rpc("claim_transfer", { input: ticket });
+  return (data as number | null) ?? 0;
+}
+
+// Admin ---------------------------------------------------------------------
+
+export interface InviteCode {
+  code: string;
+  note: string | null;
+  max_uses: number | null;
+  uses: number;
+  expires_at: string | null;
+  active: boolean;
+  created_at: string;
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string | null;
+  anonymous: boolean;
+  approved_at: string | null;
+  invite_code: string | null;
+  created_at: string;
+  last_sign_in_at: string | null;
+  bottles: number;
+}
+
+export interface AdminOverview {
+  stats: { users: number; approved: number; bottles: number; wines: number };
+  codes: InviteCode[];
+  users: AdminUser[];
+}
+
+export async function adminOverview(): Promise<AdminOverview> {
+  return check(await supabase.rpc("admin_overview")) as AdminOverview;
+}
+
+export async function adminCreateCode(c: { code?: string; note?: string; maxUses?: number | null }): Promise<string> {
+  return check(
+    await supabase.rpc("admin_create_code", {
+      new_code: c.code?.trim() || null,
+      note: c.note?.trim() || null,
+      max_uses: c.maxUses ?? null,
+      expires_at: null,
+    }),
+  ) as string;
+}
+
+export async function adminSetCodeActive(code: string, active: boolean) {
+  check(await supabase.rpc("admin_set_code_active", { target: code, is_active: active }));
+}
+
+export async function adminSetUserAccess(userId: string, access: boolean) {
+  check(await supabase.rpc("admin_set_user_access", { target: userId, has_access: access }));
 }
 
 export async function getProfile(): Promise<Profile | null> {

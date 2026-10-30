@@ -3,23 +3,23 @@ import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { Body, ErrorText, Loading, Screen, Title } from "../components/ui.tsx";
+import { InviteGate } from "../components/InviteGate.tsx";
 import { AuthProvider, useAuth } from "../lib/auth.tsx";
-import { LOGIN_ENABLED } from "../lib/config.ts";
 import { LocaleProvider, useT } from "../lib/i18n.tsx";
 import { ThemeProvider, useTheme, useThemeFonts } from "../lib/theme.tsx";
 
 function RootStack() {
-  const { session, loading, error, locale } = useAuth();
+  const { session, loading, error, locale, approved } = useAuth();
   const fontsReady = useThemeFonts();
   if (loading || !fontsReady) return <Loading />;
   return (
     <LocaleProvider locale={locale}>
-      {!session && !LOGIN_ENABLED ? <StartError error={error} /> : <Screens signedIn={!!session} />}
+      {!session ? <StartError error={error} /> : !approved ? <InviteGate /> : <Screens />}
     </LocaleProvider>
   );
 }
 
-/** Visas om den anonyma inloggningen misslyckas när inloggningssidan är avstängd. */
+/** Visas om den anonyma inloggningen misslyckas. */
 function StartError({ error }: { error: string | null }) {
   const t = useT();
   return (
@@ -31,7 +31,7 @@ function StartError({ error }: { error: string | null }) {
   );
 }
 
-function Screens({ signedIn }: { signedIn: boolean }) {
+function Screens() {
   const t = useT();
   const theme = useTheme();
   return (
@@ -46,14 +46,10 @@ function Screens({ signedIn }: { signedIn: boolean }) {
           contentStyle: { backgroundColor: theme.colors.background },
         }}
       >
-        <Stack.Protected guard={signedIn}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="register" options={{ title: t("addBottle"), presentation: "modal" }} />
-          <Stack.Screen name="bottle/[id]" options={{ title: "" }} />
-        </Stack.Protected>
-        <Stack.Protected guard={!signedIn && LOGIN_ENABLED}>
-          <Stack.Screen name="sign-in" options={{ title: t("signInTitle") }} />
-        </Stack.Protected>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ title: t("addBottle"), presentation: "modal" }} />
+        <Stack.Screen name="bottle/[id]" options={{ title: "" }} />
+        <Stack.Screen name="admin" options={{ title: t("admin") }} />
       </Stack>
     </>
   );

@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-import { Body, Button, Chips, ErrorText, Field, Screen } from "../../components/ui.tsx";
+import { router } from "expo-router";
+import { EmailLogin } from "../../components/EmailLogin.tsx";
+import { Body, Button, Card, Chips, ErrorText, Field, Heading, Screen } from "../../components/ui.tsx";
+import { signOut } from "../../lib/account.ts";
 import { updateProfile } from "../../lib/api.ts";
 import { useAuth } from "../../lib/auth.tsx";
-import { LOGIN_ENABLED } from "../../lib/config.ts";
 import { useT } from "../../lib/i18n.tsx";
-import { supabase } from "../../lib/supabase.ts";
 
 export default function Profile() {
   const t = useT();
-  const { session, profile, refreshProfile } = useAuth();
+  const { session, profile, admin, refreshProfile } = useAuth();
+  const anonymous = session?.user.is_anonymous ?? true;
   const [name, setName] = useState(profile?.display_name ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +32,6 @@ export default function Profile() {
 
   return (
     <Screen>
-      {LOGIN_ENABLED && <Body muted>{session?.user.email}</Body>}
       <Field label={t("displayName")} value={name} onChangeText={setName} maxLength={50} />
       <Button
         title={t("save")}
@@ -48,8 +49,21 @@ export default function Profile() {
         ]}
       />
       <ErrorText>{error}</ErrorText>
-      {/* Utloggning av ett anonymt konto skulle tappa källaren – bara med inloggning påslagen. */}
-      {LOGIN_ENABLED && <Button title={t("signOut")} variant="secondary" onPress={() => supabase.auth.signOut()} />}
+
+      <Heading>{t("account")}</Heading>
+      {anonymous ? (
+        // Anonym: källaren finns bara på den här enheten tills man sparar den med e-post.
+        <Card highlight>
+          <EmailLogin intro={t("saveCellarIntro")} />
+        </Card>
+      ) : (
+        <>
+          <Body>{t("signedInAs", { email: session?.user.email ?? "" })}</Body>
+          {/* Utloggning: källaren finns kvar på kontot; appen startar som ny anonym användare. */}
+          <Button title={t("signOut")} variant="secondary" onPress={() => void signOut()} />
+        </>
+      )}
+      {admin && <Button title={t("admin")} variant="secondary" onPress={() => router.push("/admin")} />}
     </Screen>
   );
 }

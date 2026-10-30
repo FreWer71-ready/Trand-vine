@@ -18,9 +18,40 @@ insert into wines (id, name, producer, region, color, grapes, source, xwines_id)
 insert into vintages (id, wine_id, year, seed_avg_rating, seed_rating_count) values
   ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 2016, 4.00, 2);
 
+-- Inbjudningskod (som admin/servern) och Anna som admin
+insert into private.invite_codes (code, max_uses) values ('TEST-KOD1', 1);
+update auth.users set email_confirmed_at = now() where id = '00000000-0000-0000-0000-00000000000a';
+
 -- Som Anna
 set role authenticated;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+
+-- Utan kod får man inte lägga till något; med kod går det
+do $$ begin
+  assert not is_approved(), 'ny användare saknar tillgång';
+  begin
+    insert into wines (name, created_by) values ('Före kod', '00000000-0000-0000-0000-00000000000a');
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update profiles set approved_at = now() where id = '00000000-0000-0000-0000-00000000000a';
+    raise exception 'borde nekas: sätta egen behörighet';
+  exception when insufficient_privilege then null;
+  end;
+  assert redeem_invite('fel-kod') = 'invalid', 'fel kod';
+  assert redeem_invite(' test-kod1 ') = 'ok', 'rätt kod, skiftläge och mellanslag spelar ingen roll';
+  assert is_approved(), 'godkänd efter kod';
+  assert not is_admin(), 'inte admin än';
+end $$;
+reset role;
+insert into private.admin_emails (email) values ('anna@example.com');
+set role authenticated;
+do $$ begin
+  assert is_admin(), 'Anna är admin';
+  assert (admin_overview() -> 'stats' ->> 'approved')::int = 1, 'adminöversikt';
+  assert admin_create_code(null, 'Till Bo', 2, null) like 'VIN-%', 'slumpad kod';
+  perform admin_create_code('bo-1', null, null, null);
+end $$;
 
 -- Får lägga till vin och streckkod, men inte förfalska startbetyg
 insert into wines (id, name, created_by) values
@@ -96,6 +127,55 @@ begin
     raise exception 'borde nekas: antal 0';
   exception when check_violation then null;
   end;
+end $$;
+
+-- Bo: kod som redan är förbrukad, för många försök, admin nekas
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
+do $$ begin
+  assert redeem_invite('TEST-KOD1') = 'used_up', 'förbrukad kod';
+  for i in 1..10 loop perform redeem_invite('gissning'); end loop;
+  assert redeem_invite('BO-1') = 'too_many_attempts', 'spärr mot gissning';
+  begin
+    perform admin_overview();
+    raise exception 'borde nekas: admin';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform admin_create_code('HACK', null, null, null);
+    raise exception 'borde nekas: skapa kod';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+reset role;
+delete from private.invite_attempts;
+set role authenticated;
+do $$ begin
+  assert redeem_invite('BO-1') = 'ok', 'Bo löser in sin kod';
+end $$;
+
+-- Flytt av källare från anonymt konto: Bo (anonym enhet) → Anna (befintligt konto)
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
+insert into bottles (id, vintage_id, acquisition_type) values
+  ('30000000-0000-0000-0000-0000000000b1', '20000000-0000-0000-0000-000000000001', 'purchase');
+create temp table ticket as select create_transfer_ticket() as t;
+grant select on ticket to authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+do $$ begin
+  assert claim_transfer((select t from ticket)) = 1, 'en flaska flyttad';
+  assert claim_transfer((select t from ticket)) = 0, 'biljetten kan bara användas en gång';
+  assert (select user_id from bottles where id = '30000000-0000-0000-0000-0000000000b1') = '00000000-0000-0000-0000-00000000000a', 'flaskan är Annas';
+end $$;
+reset role;
+update bottles set user_id = '00000000-0000-0000-0000-00000000000b' where id = '30000000-0000-0000-0000-0000000000b1';
+delete from bottles where id = '30000000-0000-0000-0000-0000000000b1';
+set role authenticated;
+
+-- Admin tar bort Bos tillgång
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select admin_set_user_access('00000000-0000-0000-0000-00000000000b', false) \gset
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
+do $$ begin
+  assert not is_approved(), 'Bo har inte längre tillgång';
 end $$;
 
 -- Som Bo: ser inte Annas flaskor eller betyg, men ser medelbetyget
