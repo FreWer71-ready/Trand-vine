@@ -1,5 +1,7 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import type { ReactNode } from "react";
+import { View } from "react-native";
 import { Body, ErrorText, Loading, Screen, Title } from "../components/ui.tsx";
 import { AuthProvider, useAuth } from "../lib/auth.tsx";
 import { LOGIN_ENABLED } from "../lib/config.ts";
@@ -57,12 +59,38 @@ function Screens({ signedIn }: { signedIn: boolean }) {
   );
 }
 
+/** Mobile first: på bred skärm (webb på dator) visas appen som en mittcentrerad mobilkolumn. */
+const MAX_WIDTH = 480;
+
+function AppFrame({ children }: { children: ReactNode }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flex: 1, alignItems: "center", backgroundColor: colors.surfaceRaised }}>
+      <View
+        style={{
+          flex: 1,
+          width: "100%",
+          maxWidth: MAX_WIDTH,
+          backgroundColor: colors.background,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <RootStack />
-      </AuthProvider>
+      <AppFrame>
+        <AuthProvider>
+          <RootStack />
+        </AuthProvider>
+      </AppFrame>
     </ThemeProvider>
   );
 }
