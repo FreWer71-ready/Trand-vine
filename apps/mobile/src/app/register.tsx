@@ -71,6 +71,7 @@ export default function Register() {
       choice={choice}
       preset={preset}
       labelVintage={label?.vintage ?? null}
+      labelEan={label?.ean}
       onBack={scan?.status === "known" ? undefined : () => setChoice(null)}
       t={t}
     />
@@ -240,6 +241,7 @@ function BottleDetails({
   choice,
   preset,
   labelVintage,
+  labelEan,
   onBack,
   t,
 }: {
@@ -247,6 +249,8 @@ function BottleDetails({
   choice: Choice;
   preset: AddAgain | null;
   labelVintage: number | null;
+  /** Okänd streckkod som skannades före etikettfotot. */
+  labelEan?: string;
   onBack?: () => void;
   t: ReturnType<typeof useT>;
 }) {
@@ -322,7 +326,9 @@ function BottleDetails({
     try {
       const wine = choice.kind === "existing" ? choice.wine : await createWine(choice.candidate);
       const ean =
-        scan && scan.status !== "invalid_barcode" && "ean" in scan ? scan.ean : toCanonicalEan(candidate?.ean ?? "");
+        scan && scan.status !== "invalid_barcode" && "ean" in scan
+          ? scan.ean
+          : labelEan ?? toCanonicalEan(candidate?.ean ?? "");
       if (ean) await linkBarcode(ean, wine.id, candidate?.source ?? "user", size);
       const vintageId = await ensureVintage(wine.id, nonVintage ? null : yearNum);
       const id = await createBottle({

@@ -18,6 +18,8 @@ let again: AddAgain | null = null;
 
 /** Resultat från etikettfoto: förslag, sökord och årgång. */
 export interface LabelResult {
+  /** Streckkoden som inte gav träff, så att den kopplas till vinet som väljs. */
+  ean?: string;
   display: string;
   vintage: number | null;
   matches: WineRow[];
