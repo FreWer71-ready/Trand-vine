@@ -15,6 +15,7 @@ import {
   applyFilters,
   buildRows,
   filterOptions,
+  mergeIdentical,
   toItems,
   type Filters,
   type SortDir,
@@ -47,7 +48,7 @@ export default function Cellar() {
   const [showFilters, setShowFilters] = useState(false);
   const [sort, setSort] = useState<SortKey>("group");
   const [dir, setDir] = useState<SortDir>("asc");
-  const items = useMemo(() => (bottles ? toItems(bottles) : []), [bottles]);
+  const items = useMemo(() => (bottles ? toItems(mergeIdentical(bottles)) : []), [bottles]);
   const options = useMemo(() => filterOptions(items, locale), [items, locale]);
   const rows = useMemo(
     () =>
@@ -148,10 +149,28 @@ export default function Cellar() {
         const { bottle, phase, rec } = row.item;
         return (
           <Card key={row.key} onPress={() => router.push(`/bottle/${bottle.id}`)}>
-            <T variant="cardTitle">
-              {wineTitle(bottle.vintages)}
-              {bottle.quantity > 1 ? ` ×${bottle.quantity}` : ""}
-            </T>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: theme.space.md }}>
+              <View style={{ flex: 1 }}>
+                <T variant="cardTitle">{wineTitle(bottle.vintages)}</T>
+              </View>
+              {bottle.quantity > 1 && (
+                <View
+                  accessibilityLabel={t("bottlesCount", { n: bottle.quantity })}
+                  style={{
+                    minWidth: 44,
+                    alignItems: "center",
+                    backgroundColor: theme.colors.primary,
+                    borderRadius: theme.radius.chip,
+                    paddingHorizontal: theme.space.md,
+                    paddingVertical: theme.space.xs,
+                  }}
+                >
+                  <T variant="heading" color={theme.colors.onPrimary} style={{ marginTop: 0, paddingBottom: 0, borderBottomWidth: 0 }}>
+                    {`×${bottle.quantity}`}
+                  </T>
+                </View>
+              )}
+            </View>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
               <T variant="strong" color={phaseColor(theme, phase)}>{PHASE_LABELS[phase][locale]}</T>
               <T variant="data" color={theme.colors.textMuted}>{rec.drinkFrom}–{rec.drinkTo}</T>
