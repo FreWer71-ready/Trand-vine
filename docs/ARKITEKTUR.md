@@ -1,4 +1,4 @@
-# Trand-vine – förslag på struktur, källor, API:er och funktioner
+# TrandWine – förslag på struktur, källor, API:er och funktioner
 
 > Status: version 1 under uppbyggnad. Se README för vad som är byggt och hur man kör det.
 

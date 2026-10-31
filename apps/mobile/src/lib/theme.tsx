@@ -1,5 +1,5 @@
 // Appens tema från designsystemet (packages/design): "tour" (Mallorca) är
-// Trand-vines utseende. EXPO_PUBLIC_APP_THEME=party ger Partyplan-utseendet,
+// TrandWines utseende. EXPO_PUBLIC_APP_THEME=party ger Partyplan-utseendet,
 // t.ex. för att förhandsgranska.
 
 import { AbrilFatface_400Regular } from "@expo-google-fonts/abril-fatface";

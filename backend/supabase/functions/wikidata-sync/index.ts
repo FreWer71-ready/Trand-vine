@@ -9,7 +9,7 @@ import postgres from "npm:postgres@3.4.5";
 
 const sql = postgres(Deno.env.get("SUPABASE_DB_URL")!, { prepare: false, max: 1 });
 const ENDPOINT = "https://query.wikidata.org/sparql";
-const UA = "Trand-vine/1.0 (https://trandvine.fred71.se; vinregister)";
+const UA = "TrandWine/1.0 (https://wine.trand.se; vinregister)";
 const GRAPE_VARIETY = "Q958314";
 const WINE_REGION = "Q2140699";
 const LANGS = `"en","sv","fr","it","es","de","pt"`;

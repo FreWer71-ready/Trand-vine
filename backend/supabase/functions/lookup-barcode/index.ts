@@ -21,7 +21,7 @@ const json = (body: unknown, status = 200) =>
   });
 
 const providers = [
-  openFoodFactsProvider({ userAgent: "Trand-vine/0.1 (https://github.com/FreWer71-ready/Trand-vine)" }),
+  openFoodFactsProvider({ userAgent: "TrandWine/0.1 (https://wine.trand.se)" }),
   upcItemDbProvider(),
 ];
 
