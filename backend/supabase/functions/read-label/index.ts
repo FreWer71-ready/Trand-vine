@@ -18,7 +18,8 @@ const MAX_IMAGE_BYTES = 6_000_000;
 // tills Supabase bryter efter 150 s.
 const sql = postgres(Deno.env.get("SUPABASE_DB_URL")!, {
   prepare: false,
-  max: 1,
+  // Flera anslutningar så att sökorden kan sökas samtidigt.
+  max: 4,
   connect_timeout: 10,
   idle_timeout: 20,
   connection: { statement_timeout: 10_000 },
@@ -78,8 +79,9 @@ interface WineHit {
 /** Söker på varje sökord och rankar vinerna som träffas av flest och bäst. */
 async function findWines(queries: string[]) {
   const score = new Map<string, { wine: WineHit; points: number }>();
-  for (const [qi, q] of queries.entries()) {
-    const rows = await sql<WineHit[]>`select * from search_wines(${q}, 10)`;
+  // Varje sökning tar ett par sekunder i 100 000 viner – kör dem samtidigt.
+  const results = await Promise.all(queries.slice(0, 5).map((q) => sql<WineHit[]>`select * from search_wines(${q}, 10)`));
+  for (const [qi, rows] of results.entries()) {
     rows.forEach((wine, rank) => {
       const s = score.get(wine.id) ?? { wine, points: 0 };
       // Tidiga sökord (flera rader ihop) och höga placeringar väger mest.
