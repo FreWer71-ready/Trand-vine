@@ -1,4 +1,4 @@
-# Trand-vine
+# TrandWine
 
 Vinapp: skanna streckkoden på en flaska → appen hittar vinet, visar betyg från
 andra användare, du anger hur du fick flaskan (köp, gåva, …) och får råd om
@@ -83,7 +83,7 @@ npx supabase --workdir backend functions deploy lookup-barcode  # streckkodsupps
   raderas med källare och betyg, men inte sig själv eller andra admin).
 - Med Supabases standardmejl kommer en **länk** som loggar in på webben
   (kräver att **Authentication → URL Configuration → Site URL** är appens
-  adress, t.ex. `https://trandvine.fred71.se`). Lägg till `{{ .Token }}` i
+  adress, t.ex. `https://wine.trand.se`). Lägg till `{{ .Token }}` i
   mallarna **Magic Link** och **Change Email Address** så kommer även en
   sexsiffrig kod, som fungerar i telefonappen. Supabases inbyggda e-post klarar bara några mejl i timmen; koppla
   egen SMTP (t.ex. Resend) under Authentication → SMTP Settings för riktiga

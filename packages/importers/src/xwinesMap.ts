@@ -1,4 +1,4 @@
-// Översättning av X-Wines-rader till Trand-vines vinmodell. Helt fristående
+// Översättning av X-Wines-rader till TrandWines vinmodell. Helt fristående
 // (inga beroenden) så att samma kod används av importverktyget och av
 // Supabase-funktionen import-xwines.
 //

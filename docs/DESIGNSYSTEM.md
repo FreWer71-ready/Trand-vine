@@ -9,7 +9,7 @@ att byta tema – komponenterna ändras inte.
 | `party` | Nöjesappar (fester, spel, tävlingar) | Partyplan / [Fredrik55](https://github.com/FreWer71-ready/Fredrik55) | Natthimmel, cerise, turkos, solgul. Fredoka + Nunito. Rundat, knappar med 3D-tryck. Alltid mörkt. |
 | `tour` | Resor, samlingar, klassiska appar | [Mallorca Golf Tour](https://github.com/FreWer71-ready/golftour) | Vintageaffisch: pergament, vinröd, guld. Abril Fatface, Fraunces, Lora, Special Elite, IBM Plex Mono. Ljust och mörkt läge. |
 
-**Trand-vine använder `tour`.**
+**TrandWine använder `tour`.**
 
 ![Tour ljust, Tour mörkt och Party](screenshots/themes.png)
 

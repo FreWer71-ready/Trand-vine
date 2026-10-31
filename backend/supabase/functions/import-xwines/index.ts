@@ -138,7 +138,7 @@ async function importExternal(source: string, wines: ExternalWine[]) {
 }
 
 async function importAlko(url: string, dryRun: boolean) {
-  const res = await fetch(url, { headers: { "User-Agent": "Trand-vine/1.0 (vinregister)" } });
+  const res = await fetch(url, { headers: { "User-Agent": "TrandWine/1.0 (vinregister)" } });
   if (!res.ok) throw new Error(`Alko svarade ${res.status}. Ladda ner prislistan själv och ange dess adress som "url".`);
   if ((res.headers.get("content-type") ?? "").includes("text/html")) {
     throw new Error('Alko svarade med en webbsida i stället för filen. Ladda ner prislistan själv och ange dess adress som "url".');

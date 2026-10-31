@@ -19,7 +19,7 @@ const MAX_USES = [1, 5, 20, 0]; // 0 = obegränsat
 
 /** Länk som fyller i koden åt gästen (som QR-länken med ?kod= i Fredrik55). */
 const inviteLink = (code: string) =>
-  `${Platform.OS === "web" ? globalThis.location?.origin : "https://trandvine.fred71.se"}/?kod=${encodeURIComponent(code)}`;
+  `${Platform.OS === "web" ? globalThis.location?.origin : "https://wine.trand.se"}/?kod=${encodeURIComponent(code)}`;
 
 export default function Admin() {
   const t = useT();

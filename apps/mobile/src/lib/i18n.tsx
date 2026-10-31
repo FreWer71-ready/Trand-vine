@@ -4,7 +4,7 @@ import type { Locale } from "@trand-vine/core";
 
 const STRINGS = {
   sv: {
-    appName: "Trand-vine",
+    appName: "TrandWine",
     cellar: "Källare",
     scan: "Skanna",
     history: "Historik",
@@ -64,7 +64,7 @@ const STRINGS = {
     location: "Plats i källaren",
     addBottle: "Lägg i källaren",
     quantity: "Antal flaskor",
-    inviteIntro: "Trand-vine är just nu bara för inbjudna. Skriv in koden du fått.",
+    inviteIntro: "TrandWine är just nu bara för inbjudna. Skriv in koden du fått.",
     inviteCode: "Inbjudningskod",
     inviteContinue: "Fortsätt",
     inviteNoCode: "Ingen kod? Fråga den som bjöd in dig.",
@@ -180,7 +180,7 @@ const STRINGS = {
     startFailed: "Appen kunde inte starta. Kontrollera nätverket och försök igen.",
   },
   en: {
-    appName: "Trand-vine",
+    appName: "TrandWine",
     cellar: "Cellar",
     scan: "Scan",
     history: "History",
@@ -240,7 +240,7 @@ const STRINGS = {
     location: "Location in cellar",
     addBottle: "Add to cellar",
     quantity: "Number of bottles",
-    inviteIntro: "Trand-vine is invite-only for now. Enter the code you received.",
+    inviteIntro: "TrandWine is invite-only for now. Enter the code you received.",
     inviteCode: "Invite code",
     inviteContinue: "Continue",
     inviteNoCode: "No code? Ask the person who invited you.",

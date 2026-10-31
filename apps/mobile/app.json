@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Trand-vine",
-    "slug": "trand-vine",
-    "scheme": "trandvine",
+    "name": "TrandWine",
+    "slug": "trandwine",
+    "scheme": "trandwine",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.trandvine"
+      "bundleIdentifier": "app.trandwine"
     },
     "android": {
-      "package": "app.trandvine",
+      "package": "app.trandwine",
       "adaptiveIcon": {
         "backgroundColor": "#5B1A2E",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -30,7 +30,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Trand-vine använder kameran för att skanna streckkoden på vinflaskor. / Trand-vine uses the camera to scan barcodes on wine bottles.",
+          "cameraPermission": "TrandWine använder kameran för att skanna streckkoden på vinflaskor. / TrandWine uses the camera to scan barcodes on wine bottles.",
           "recordAudioAndroid": false
         }
       ],

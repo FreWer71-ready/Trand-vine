@@ -1,4 +1,4 @@
-// Översättning av Systembolagets produktdata till Trand-vines vinmodell.
+// Översättning av Systembolagets produktdata till TrandWines vinmodell.
 //
 // Systembolaget har inget öppet API längre; datan kommer från speglar som
 // sparar deras sortiment i samma format som det gamla API:t, t.ex.
