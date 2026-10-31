@@ -11,6 +11,7 @@ import type {
   WineColor,
 } from "@trand-vine/core";
 import { supabase } from "./supabase.ts";
+import { matchSystembolagetWine, pickOffer, type SbRow } from "./systembolaget.ts";
 
 export interface WineRow {
   id: string;
@@ -168,6 +169,45 @@ export async function systembolagetOffers(wines: WineRow[]): Promise<Map<string,
     await supabase.from("systembolaget_products").select("wine_id, short_number, vintage, volume_ml, price").in("wine_id", ids),
   ) as SystembolagetOffer[];
   return new Map(rows.map((r) => [r.wine_id, r]));
+}
+
+export interface CurrentPrice {
+  price: number;
+  short_number: string;
+}
+
+/**
+ * Systembolagets aktuella pris för flaskor som saknar eget pris. Vinet kopplas
+ * via sitt artikelnummer, eller (om det saknas) via en strikt namnmatchning
+ * mot Systembolagets sortiment. Nyckel: flaskans id. Fel ger tomt svar.
+ */
+export async function currentPrices(bottles: BottleRow[]): Promise<Map<string, CurrentPrice>> {
+  const missing = bottles.filter((b) => b.price === null);
+  const wines = new Map(missing.map((b) => [b.vintages.wines.id, b.vintages.wines]));
+  // Vin i registret → vin i Systembolagets sortiment.
+  const sbWine = new Map<string, string>();
+  const unlinked: WineRow[] = [];
+  for (const w of wines.values()) (w.systembolaget_nr ? sbWine.set(w.id, w.id) : unlinked.push(w));
+  for (let i = 0; i < Math.min(unlinked.length, 20); i += 4) {
+    await Promise.all(
+      unlinked.slice(i, i + 4).map(async (w) => {
+        const hits = await searchWines([w.producer, w.name].filter(Boolean).join(" ")).catch(() => []);
+        const match = matchSystembolagetWine(w, hits);
+        if (match) sbWine.set(w.id, match.id);
+      }),
+    );
+  }
+  const ids = [...new Set(sbWine.values())];
+  if (!ids.length) return new Map();
+  const { data } = await supabase.from("systembolaget_products").select("wine_id, short_number, vintage, volume_ml, price").in("wine_id", ids);
+  const rows = (data ?? []) as SbRow[];
+  const out = new Map<string, CurrentPrice>();
+  for (const b of missing) {
+    const sb = sbWine.get(b.vintages.wines.id);
+    const row = sb ? pickOffer(rows.filter((r) => r.wine_id === sb), b.vintages.year, b.size_ml) : null;
+    if (row?.price != null) out.set(b.id, { price: row.price, short_number: row.short_number });
+  }
+  return out;
 }
 
 // Reserv när registret saknar vinet. Körs från klienten så att varje
