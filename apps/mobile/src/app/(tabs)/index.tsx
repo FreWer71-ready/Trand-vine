@@ -193,7 +193,13 @@ export default function Cellar() {
                 })}
               </T>
             )}
-            {offer && <T variant="muted">{t("systembolagetPrice", { price: formatPrice(offer.price, "SEK", locale) })}</T>}
+            {offer && (
+              <T variant="muted">
+                {offer.probability >= 1
+                  ? t("systembolagetPrice", { price: formatPrice(offer.price, "SEK", locale) })
+                  : t("systembolagetLikelyPrice", { price: formatPrice(offer.price, "SEK", locale), pct: Math.round(offer.probability * 100) })}
+              </T>
+            )}
             {bottle.location && <T variant="muted">{bottle.location}</T>}
           </Card>
         );
