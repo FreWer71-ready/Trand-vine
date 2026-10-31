@@ -174,38 +174,43 @@ export async function systembolagetOffers(wines: WineRow[]): Promise<Map<string,
 export interface CurrentPrice {
   price: number;
   short_number: string;
+  /** 1 när vinet är kopplat till Systembolagets artikelnummer, annars uppskattad sannolikhet (0–1). */
+  probability: number;
 }
 
 /**
  * Systembolagets aktuella pris för flaskor som saknar eget pris. Vinet kopplas
- * via sitt artikelnummer, eller (om det saknas) via en strikt namnmatchning
+ * via sitt artikelnummer, eller (om det saknas) via en namnmatchning med sannolikhet
  * mot Systembolagets sortiment. Nyckel: flaskans id. Fel ger tomt svar.
  */
 export async function currentPrices(bottles: BottleRow[]): Promise<Map<string, CurrentPrice>> {
   const missing = bottles.filter((b) => b.price === null);
   const wines = new Map(missing.map((b) => [b.vintages.wines.id, b.vintages.wines]));
   // Vin i registret → vin i Systembolagets sortiment.
-  const sbWine = new Map<string, string>();
+  const sbWine = new Map<string, { id: string; probability: number }>();
   const unlinked: WineRow[] = [];
-  for (const w of wines.values()) (w.systembolaget_nr ? sbWine.set(w.id, w.id) : unlinked.push(w));
+  for (const w of wines.values()) (w.systembolaget_nr ? sbWine.set(w.id, { id: w.id, probability: 1 }) : unlinked.push(w));
   for (let i = 0; i < Math.min(unlinked.length, 20); i += 4) {
     await Promise.all(
       unlinked.slice(i, i + 4).map(async (w) => {
-        const hits = await searchWines([w.producer, w.name].filter(Boolean).join(" ")).catch(() => []);
-        const match = matchSystembolagetWine(w, hits);
-        if (match) sbWine.set(w.id, match.id);
+        // Först producent och namn, sedan bara namnet om det inte gav någon träff.
+        const queries = [[w.producer, w.name].filter(Boolean).join(" "), w.name];
+        for (const q of queries) {
+          const match = matchSystembolagetWine(w, await searchWines(q).catch(() => []));
+          if (match) return void sbWine.set(w.id, { id: match.wine.id, probability: match.probability });
+        }
       }),
     );
   }
-  const ids = [...new Set(sbWine.values())];
+  const ids = [...new Set([...sbWine.values()].map((m) => m.id))];
   if (!ids.length) return new Map();
   const { data } = await supabase.from("systembolaget_products").select("wine_id, short_number, vintage, volume_ml, price").in("wine_id", ids);
   const rows = (data ?? []) as SbRow[];
   const out = new Map<string, CurrentPrice>();
   for (const b of missing) {
     const sb = sbWine.get(b.vintages.wines.id);
-    const row = sb ? pickOffer(rows.filter((r) => r.wine_id === sb), b.vintages.year, b.size_ml) : null;
-    if (row?.price != null) out.set(b.id, { price: row.price, short_number: row.short_number });
+    const row = sb ? pickOffer(rows.filter((r) => r.wine_id === sb.id), b.vintages.year, b.size_ml) : null;
+    if (sb && row?.price != null) out.set(b.id, { price: row.price, short_number: row.short_number, probability: sb.probability });
   }
   return out;
 }
