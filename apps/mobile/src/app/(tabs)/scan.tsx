@@ -26,6 +26,8 @@ export default function Scan() {
   const handling = useRef(false);
   const camera = useRef<CameraView>(null);
   const [reading, setReading] = useState(false);
+  // Etikettläge: stor ram som täcker kamerabilden, ingen streckkodsskanning.
+  const [labelMode, setLabelMode] = useState(false);
 
   // Etikettfoto: när streckkoden saknas eller inte ger träff.
   async function photoLabel() {
@@ -115,7 +117,7 @@ export default function Scan() {
           style={StyleSheet.absoluteFill}
           facing="back"
           barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "itf14"] }}
-          onBarcodeScanned={busy ? undefined : onScanned}
+          onBarcodeScanned={busy || labelMode ? undefined : onScanned}
           onCameraReady={() => rememberCamera(true)}
           onMountError={() => {
             // Nekad eller ingen kamera: glöm ja:et och visa alternativen.
@@ -124,16 +126,26 @@ export default function Scan() {
           }}
         />
       )}
-      <View style={styles.overlay}>
-        <View style={styles.frame} />
+      <View style={[styles.overlay, labelMode && styles.overlayLabel]}>
+        <View style={labelMode ? styles.labelFrame : styles.frame} />
         <Text style={[styles.hint, { fontFamily: theme.fonts.heading.native }]}>
-          {reading ? t("readingLabel") : busy ? t("lookingUp") : t("pointAtBarcode")}
+          {reading ? t("readingLabel") : busy ? t("lookingUp") : labelMode ? t("pointAtLabel") : t("pointAtBarcode")}
         </Text>
         {(busy || reading) && <ActivityIndicator color="#fff" />}
       </View>
       <View style={[styles.bottom, { backgroundColor: theme.colors.background }]}>
-        <Button title={t("photoLabel")} onPress={() => void photoLabel()} loading={reading} disabled={busy} />
-        {fallback}
+        {labelMode ? (
+          <>
+            <Button title={t("photoLabel")} onPress={() => void photoLabel()} loading={reading} />
+            <Button title={t("scanBarcodeInstead")} variant="secondary" onPress={() => setLabelMode(false)} disabled={reading} />
+          </>
+        ) : (
+          <>
+            <Button title={t("readLabel")} variant="secondary" onPress={() => { setError(null); setLabelMode(true); }} disabled={busy} />
+            {fallback}
+          </>
+        )}
+        {labelMode && <ErrorText>{error}</ErrorText>}
       </View>
     </View>
   );
@@ -142,6 +154,9 @@ export default function Scan() {
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
   frame: { width: "80%", height: 140, borderWidth: 3, borderColor: "#fff", borderRadius: 16 },
+  // Etikett: ramen fyller kamerabilden så att hela etiketten kommer med.
+  overlayLabel: { paddingHorizontal: 16, paddingVertical: 16 },
+  labelFrame: { width: "100%", flex: 1, borderWidth: 3, borderColor: "#fff", borderRadius: 16 },
   hint: { color: "#fff", fontSize: 17, textShadowColor: "#000", textShadowRadius: 4 },
   bottom: { padding: 16, gap: 8 },
 });
