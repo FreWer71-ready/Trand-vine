@@ -156,9 +156,18 @@ export default function Cellar() {
               {bottle.quantity > 1 && (
                 <View
                   accessibilityLabel={t("bottlesCount", { n: bottle.quantity })}
-                  style={{ backgroundColor: theme.colors.tag, borderRadius: theme.radius.chip, paddingHorizontal: theme.space.md, paddingVertical: 2 }}
+                  style={{
+                    minWidth: 44,
+                    alignItems: "center",
+                    backgroundColor: theme.colors.primary,
+                    borderRadius: theme.radius.chip,
+                    paddingHorizontal: theme.space.md,
+                    paddingVertical: theme.space.xs,
+                  }}
                 >
-                  <T variant="data" color={theme.colors.onTag}>×{bottle.quantity}</T>
+                  <T variant="heading" color={theme.colors.onPrimary} style={{ marginTop: 0, paddingBottom: 0, borderBottomWidth: 0 }}>
+                    {`×${bottle.quantity}`}
+                  </T>
                 </View>
               )}
             </View>
