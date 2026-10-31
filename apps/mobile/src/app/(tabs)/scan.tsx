@@ -5,7 +5,7 @@ import { router, useIsFocused } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Body, Button, ErrorText, Field, Loading, Screen, T } from "../../components/ui.tsx";
-import { LabelError, lookupBarcode, readLabel } from "../../lib/api.ts";
+import { LabelError, lookupBarcode, readLabel, type ScanResult } from "../../lib/api.ts";
 import { cameraRemembered, rememberCamera } from "../../lib/cameraConsent.ts";
 import { shrinkForUpload } from "../../lib/shrinkImage.ts";
 import { useT } from "../../lib/i18n.tsx";
@@ -28,13 +28,19 @@ export default function Scan() {
   const [reading, setReading] = useState(false);
   // Etikettläge: stor ram som täcker kamerabilden, ingen streckkodsskanning.
   const [labelMode, setLabelMode] = useState(false);
+  // Okänd streckkod: be om ett etikettfoto och koppla sedan koden till vinet,
+  // så att nästa skanning av samma flaska ger direkt träff.
+  const [missed, setMissed] = useState<ScanResult | null>(null);
   // Lampa: alltid i telefonappen; på webben bara där kameran stöder det
   // (oftast Android/Chrome – Safari på iPhone saknar stöd).
   const [torch, setTorch] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(Platform.OS !== "web");
   // Släck när man lämnar fliken, så att lampan inte är tänd nästa gång.
   useEffect(() => {
-    if (!focused) setTorch(false);
+    if (!focused) {
+      setTorch(false);
+      setMissed(null);
+    }
   }, [focused]);
 
   // Etikettfoto: när streckkoden saknas eller inte ger träff.
@@ -48,7 +54,13 @@ export default function Scan() {
       const image = await shrinkForUpload(pic?.uri, pic?.base64);
       if (!image) throw new LabelError("failed");
       const result = await readLabel(image);
-      setPendingLabel({ display: result.display, vintage: result.vintage, matches: result.matches });
+      setPendingLabel({
+        ean: missed && "ean" in missed ? missed.ean : undefined,
+        display: result.display,
+        vintage: result.vintage,
+        matches: result.matches,
+      });
+      setMissed(null);
       router.push("/register");
     } catch (e) {
       const code = e instanceof LabelError ? e.code : "failed";
@@ -64,8 +76,17 @@ export default function Scan() {
     setBusy(true);
     setError(null);
     try {
-      setPendingScan(await lookupBarcode(code));
+      const result = await lookupBarcode(code);
       setTyped("");
+      const unknown =
+        result.status === "not_found" ||
+        (result.status === "candidates" && result.candidates.length === 0 && !result.registryMatches?.length);
+      if (unknown) {
+        setMissed(result);
+        setLabelMode(true);
+        return;
+      }
+      setPendingScan(result);
       router.push("/register");
     } catch {
       setError(t("lookupFailed"));
@@ -159,8 +180,23 @@ export default function Scan() {
       <View style={[styles.bottom, { backgroundColor: theme.colors.background }]}>
         {labelMode ? (
           <>
+            {missed && <Body>{t("barcodeUnknown")}</Body>}
             <Button title={t("photoLabel")} onPress={() => void photoLabel()} loading={reading} />
-            <Button title={t("scanBarcodeInstead")} variant="secondary" onPress={() => setLabelMode(false)} disabled={reading} />
+            {missed ? (
+              <Button
+                title={t("searchByName")}
+                variant="secondary"
+                disabled={reading}
+                onPress={() => {
+                  setPendingScan(missed);
+                  setMissed(null);
+                  setLabelMode(false);
+                  router.push("/register");
+                }}
+              />
+            ) : (
+              <Button title={t("scanBarcodeInstead")} variant="secondary" onPress={() => setLabelMode(false)} disabled={reading} />
+            )}
           </>
         ) : (
           <>
