@@ -197,7 +197,8 @@ export default function Cellar() {
               <T variant="muted">
                 {offer.probability >= 1
                   ? t("systembolagetPrice", { price: formatPrice(offer.price, "SEK", locale) })
-                  : t("systembolagetLikelyPrice", { price: formatPrice(offer.price, "SEK", locale), pct: Math.round(offer.probability * 100) })}
+                  : t("systembolagetIndication", { price: formatPrice(offer.price, "SEK", locale), pct: Math.round(offer.probability * 100) }) +
+                    (offer.vintage !== null && offer.vintage !== bottle.vintages.year ? t("systembolagetVintage", { year: offer.vintage }) : "")}
               </T>
             )}
             {bottle.location && <T variant="muted">{bottle.location}</T>}
