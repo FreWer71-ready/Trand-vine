@@ -42,6 +42,22 @@ export const DEFAULT_DIR: Record<SortKey, SortDir> = {
 const PHASE_ORDER: Record<DrinkPhase, number> = { over: 0, past_peak: 1, peak: 2, ready: 3, too_young: 4 };
 const COLOR_ORDER: WineColor[] = ["red", "white", "rose", "sparkling", "dessert", "fortified"];
 
+/**
+ * Slår ihop identiska poster (samma årgång och flaskstorlek) till en med summerat antal.
+ * Den senast tillagda posten företräder gruppen (för länk, pris och datum).
+ */
+export function mergeIdentical(bottles: BottleRow[]): BottleRow[] {
+  const groups = new Map<string, BottleRow[]>();
+  for (const b of bottles) {
+    const key = `${b.vintage_id}:${b.size_ml}`;
+    groups.set(key, [...(groups.get(key) ?? []), b]);
+  }
+  return [...groups.values()].map((group) => {
+    const newest = group.reduce((a, b) => (b.created_at > a.created_at ? b : a));
+    return group.length === 1 ? newest : { ...newest, quantity: group.reduce((n, b) => n + b.quantity, 0) };
+  });
+}
+
 export function toItems(bottles: BottleRow[]): CellarItem[] {
   return bottles.map((bottle) => {
     const rec = recommendationFor(bottle);
