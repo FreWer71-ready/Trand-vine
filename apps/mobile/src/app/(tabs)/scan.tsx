@@ -2,8 +2,8 @@
 
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { router, useIsFocused } from "expo-router";
-import { useRef, useState } from "react";
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Body, Button, ErrorText, Field, Loading, Screen, T } from "../../components/ui.tsx";
 import { LabelError, lookupBarcode, readLabel } from "../../lib/api.ts";
 import { cameraRemembered, rememberCamera } from "../../lib/cameraConsent.ts";
@@ -28,6 +28,14 @@ export default function Scan() {
   const [reading, setReading] = useState(false);
   // Etikettläge: stor ram som täcker kamerabilden, ingen streckkodsskanning.
   const [labelMode, setLabelMode] = useState(false);
+  // Lampa: alltid i telefonappen; på webben bara där kameran stöder det
+  // (oftast Android/Chrome – Safari på iPhone saknar stöd).
+  const [torch, setTorch] = useState(false);
+  const [torchAvailable, setTorchAvailable] = useState(Platform.OS !== "web");
+  // Släck när man lämnar fliken, så att lampan inte är tänd nästa gång.
+  useEffect(() => {
+    if (!focused) setTorch(false);
+  }, [focused]);
 
   // Etikettfoto: när streckkoden saknas eller inte ger träff.
   async function photoLabel() {
@@ -118,13 +126,28 @@ export default function Scan() {
           facing="back"
           barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "itf14"] }}
           onBarcodeScanned={busy || labelMode ? undefined : onScanned}
-          onCameraReady={() => rememberCamera(true)}
+          enableTorch={torch}
+          onCameraReady={() => {
+            rememberCamera(true);
+            if (Platform.OS === "web") setTorchAvailable(webTorchSupported());
+          }}
           onMountError={() => {
             // Nekad eller ingen kamera: glöm ja:et och visa alternativen.
             rememberCamera(false);
             setWebAllowed(false);
           }}
         />
+      )}
+      {torchAvailable && (
+        <Pressable
+          accessibilityRole="switch"
+          accessibilityState={{ checked: torch }}
+          accessibilityLabel={t("torch")}
+          onPress={() => setTorch((on) => !on)}
+          style={[styles.torch, torch && styles.torchOn]}
+        >
+          <Text style={[styles.torchText, torch && { color: "#000" }]}>{torch ? t("torchOff") : t("torchOn")}</Text>
+        </Pressable>
       )}
       <View style={[styles.overlay, labelMode && styles.overlayLabel]}>
         <View style={labelMode ? styles.labelFrame : styles.frame} />
@@ -151,7 +174,25 @@ export default function Scan() {
   );
 }
 
+/** Webb: har kamerans videospår stöd för lampa (torch)? */
+function webTorchSupported(): boolean {
+  try {
+    const video = globalThis.document?.querySelector("video");
+    const track = (video?.srcObject as MediaStream | null)?.getVideoTracks()[0];
+    const caps = track?.getCapabilities?.() as (MediaTrackCapabilities & { torch?: boolean }) | undefined;
+    return caps?.torch === true;
+  } catch {
+    return false;
+  }
+}
+
 const styles = StyleSheet.create({
+  torch: {
+    position: "absolute", top: 12, right: 12, zIndex: 2, paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 20, backgroundColor: "rgba(0,0,0,0.55)", borderWidth: 1, borderColor: "#fff",
+  },
+  torchOn: { backgroundColor: "#ffd54a", borderColor: "#ffd54a" },
+  torchText: { color: "#fff", fontSize: 15, fontWeight: "600" },
   overlay: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
   frame: { width: "80%", height: 140, borderWidth: 3, borderColor: "#fff", borderRadius: 16 },
   // Etikett: ramen fyller kamerabilden så att hela etiketten kommer med.
