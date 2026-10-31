@@ -4,8 +4,11 @@ import { COLOR_LABELS, drinkPhase, type DrinkPhase, type Locale, type Recommenda
 import type { BottleRow } from "./api.ts";
 import { recommendationFor } from "./format.ts";
 
+/** En post i källaren; vid sammanslagning är price lägsta och priceMax högsta pris i gruppen. */
+export type CellarBottle = BottleRow & { priceMax?: number | null };
+
 export interface CellarItem {
-  bottle: BottleRow;
+  bottle: CellarBottle;
   phase: DrinkPhase;
   rec: Recommendation;
 }
@@ -46,7 +49,7 @@ const COLOR_ORDER: WineColor[] = ["red", "white", "rose", "sparkling", "dessert"
  * Slår ihop identiska poster (samma årgång och flaskstorlek) till en med summerat antal.
  * Den senast tillagda posten företräder gruppen (för länk, pris och datum).
  */
-export function mergeIdentical(bottles: BottleRow[]): BottleRow[] {
+export function mergeIdentical(bottles: BottleRow[]): CellarBottle[] {
   const groups = new Map<string, BottleRow[]>();
   for (const b of bottles) {
     const key = `${b.vintage_id}:${b.size_ml}`;
@@ -54,11 +57,22 @@ export function mergeIdentical(bottles: BottleRow[]): BottleRow[] {
   }
   return [...groups.values()].map((group) => {
     const newest = group.reduce((a, b) => (b.created_at > a.created_at ? b : a));
-    return group.length === 1 ? newest : { ...newest, quantity: group.reduce((n, b) => n + b.quantity, 0) };
+    if (group.length === 1) return newest;
+    // Pris visas bara när alla prissatta flaskor har samma valuta; annars går de inte att jämföra.
+    const priced = group.filter((b) => b.price !== null);
+    const sameCurrency = priced.every((b) => b.currency === priced[0]!.currency);
+    const prices = sameCurrency ? priced.map((b) => b.price!) : [];
+    return {
+      ...newest,
+      quantity: group.reduce((n, b) => n + b.quantity, 0),
+      price: prices.length ? Math.min(...prices) : null,
+      priceMax: prices.length ? Math.max(...prices) : null,
+      currency: prices.length ? priced[0]!.currency : null,
+    };
   });
 }
 
-export function toItems(bottles: BottleRow[]): CellarItem[] {
+export function toItems(bottles: CellarBottle[]): CellarItem[] {
   return bottles.map((bottle) => {
     const rec = recommendationFor(bottle);
     return { bottle, rec, phase: drinkPhase(rec) };

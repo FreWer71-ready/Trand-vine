@@ -22,7 +22,7 @@ import {
   type SortKey,
   type StatusFilter,
 } from "../../lib/cellar.ts";
-import { wineTitle } from "../../lib/format.ts";
+import { formatPrice, wineTitle } from "../../lib/format.ts";
 import { openManualAdd } from "../../lib/scanStore.ts";
 import { useLocale, useT, type StringKey } from "../../lib/i18n.tsx";
 import { useTheme } from "../../lib/theme.tsx";
@@ -175,6 +175,16 @@ export default function Cellar() {
               <T variant="strong" color={phaseColor(theme, phase)}>{PHASE_LABELS[phase][locale]}</T>
               <T variant="data" color={theme.colors.textMuted}>{rec.drinkFrom}–{rec.drinkTo}</T>
             </View>
+            {bottle.price !== null && (
+              <T variant="muted">
+                {t("priceEach", {
+                  price:
+                    bottle.priceMax != null && bottle.priceMax !== bottle.price
+                      ? `${formatPrice(bottle.price, bottle.currency, locale)}–${formatPrice(bottle.priceMax, bottle.currency, locale)}`
+                      : formatPrice(bottle.price, bottle.currency, locale),
+                })}
+              </T>
+            )}
             {bottle.location && <T variant="muted">{bottle.location}</T>}
           </Card>
         );

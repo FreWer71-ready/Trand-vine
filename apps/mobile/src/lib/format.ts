@@ -39,3 +39,16 @@ export function today(): string {
 export function isIsoDate(s: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
 }
+
+/** Pris med valutasymbol enligt språk, t.ex. "249 kr". Okänd valuta visas som kod. */
+export function formatPrice(amount: number, currency: string | null, locale: string): string {
+  const digits = Number.isInteger(amount) ? 0 : 2;
+  try {
+    if (currency) {
+      return new Intl.NumberFormat(locale, { style: "currency", currency, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(amount);
+    }
+  } catch {
+    // Ogiltig valutakod: faller tillbaka på belopp + kod nedan.
+  }
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(amount)}${currency ? ` ${currency}` : ""}`;
+}
