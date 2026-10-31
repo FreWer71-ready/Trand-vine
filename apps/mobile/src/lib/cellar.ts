@@ -1,7 +1,7 @@
 // Källarvyn: filtrering, sortering och gruppering av flaskor i lager.
 
 import { COLOR_LABELS, drinkPhase, type DrinkPhase, type Locale, type Recommendation, type WineColor } from "@trand-vine/core";
-import type { BottleRow } from "./api.ts";
+import type { BottleRow, CurrentPrice } from "./api.ts";
 import { recommendationFor } from "./format.ts";
 
 /** En post i källaren; vid sammanslagning är price lägsta och priceMax högsta pris i gruppen. */
@@ -11,6 +11,8 @@ export interface CellarItem {
   bottle: CellarBottle;
   phase: DrinkPhase;
   rec: Recommendation;
+  /** Systembolagets aktuella pris, när flaskan saknar eget pris. */
+  offer: CurrentPrice | null;
 }
 
 export type SortKey = "group" | "urgency" | "country" | "region" | "grape" | "added" | "purchased" | "price";
@@ -72,10 +74,10 @@ export function mergeIdentical(bottles: BottleRow[]): CellarBottle[] {
   });
 }
 
-export function toItems(bottles: CellarBottle[]): CellarItem[] {
+export function toItems(bottles: CellarBottle[], offers: Map<string, CurrentPrice> = new Map()): CellarItem[] {
   return bottles.map((bottle) => {
     const rec = recommendationFor(bottle);
-    return { bottle, rec, phase: drinkPhase(rec) };
+    return { bottle, rec, phase: drinkPhase(rec), offer: bottle.price === null ? (offers.get(bottle.id) ?? null) : null };
   });
 }
 
@@ -213,7 +215,7 @@ export function buildRows(items: CellarItem[], sort: SortKey, dir: SortDir, labe
     case "purchased":
       return flat([...items].sort((a, b) => compareNullable(a.bottle.acquired_at, b.bottle.acquired_at, dir, (x, y) => x.localeCompare(y))));
     case "price":
-      return flat([...items].sort((a, b) => compareNullable(a.bottle.price, b.bottle.price, dir, (x, y) => x - y)));
+      return flat([...items].sort((a, b) => compareNullable(a.bottle.price ?? a.offer?.price ?? null, b.bottle.price ?? b.offer?.price ?? null, dir, (x, y) => x - y)));
     case "urgency":
       return flat(dir === "asc" ? urgent : [...urgent].reverse());
   }

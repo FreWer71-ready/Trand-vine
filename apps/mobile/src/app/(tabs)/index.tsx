@@ -6,7 +6,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { View } from "react-native";
 import { Body, Button, Card, Chips, ErrorText, Loading, Screen, T, phaseColor } from "../../components/ui.tsx";
-import { listBottles, type BottleRow } from "../../lib/api.ts";
+import { currentPrices, listBottles, type BottleRow, type CurrentPrice } from "../../lib/api.ts";
 import {
   DEFAULT_DIR,
   NO_FILTERS,
@@ -48,7 +48,8 @@ export default function Cellar() {
   const [showFilters, setShowFilters] = useState(false);
   const [sort, setSort] = useState<SortKey>("group");
   const [dir, setDir] = useState<SortDir>("asc");
-  const items = useMemo(() => (bottles ? toItems(mergeIdentical(bottles)) : []), [bottles]);
+  const [offers, setOffers] = useState<Map<string, CurrentPrice>>(new Map());
+  const items = useMemo(() => (bottles ? toItems(mergeIdentical(bottles), offers) : []), [bottles, offers]);
   const options = useMemo(() => filterOptions(items, locale), [items, locale]);
   const rows = useMemo(
     () =>
@@ -68,7 +69,14 @@ export default function Cellar() {
 
   useFocusEffect(
     useCallback(() => {
-      listBottles(["in_cellar"]).then(setBottles, (e: Error) => setError(e.message));
+      listBottles(["in_cellar"]).then(
+        (list) => {
+          setBottles(list);
+          // Systembolagets pris hämtas efteråt, så att listan visas direkt.
+          currentPrices(list).then(setOffers, () => undefined);
+        },
+        (e: Error) => setError(e.message),
+      );
     }, []),
   );
 
@@ -146,7 +154,7 @@ export default function Cellar() {
       {rows.map((row) => {
         if (row.kind === "heading") return <T key={row.key} variant="heading">{`${row.title} · ${row.count}`}</T>;
         if (row.kind === "subheading") return <T key={row.key} variant="label">{`${row.title} · ${row.count}`}</T>;
-        const { bottle, phase, rec } = row.item;
+        const { bottle, phase, rec, offer } = row.item;
         return (
           <Card key={row.key} onPress={() => router.push(`/bottle/${bottle.id}`)}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: theme.space.md }}>
@@ -185,6 +193,7 @@ export default function Cellar() {
                 })}
               </T>
             )}
+            {offer && <T variant="muted">{t("systembolagetPrice", { price: formatPrice(offer.price, "SEK", locale) })}</T>}
             {bottle.location && <T variant="muted">{bottle.location}</T>}
           </Card>
         );
