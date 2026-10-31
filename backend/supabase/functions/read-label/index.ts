@@ -14,7 +14,22 @@ const PER_USER_PER_DAY = 30;
 const PER_MONTH = 950;
 const MAX_IMAGE_BYTES = 6_000_000;
 
-const sql = postgres(Deno.env.get("SUPABASE_DB_URL")!, { prepare: false, max: 1 });
+// Tidsgränser så att ett hängande anrop ger ett fel i stället för att vänta
+// tills Supabase bryter efter 150 s.
+const sql = postgres(Deno.env.get("SUPABASE_DB_URL")!, {
+  prepare: false,
+  max: 1,
+  connect_timeout: 10,
+  idle_timeout: 20,
+  connection: { statement_timeout: 10_000 },
+});
+const VISION_TIMEOUT_MS = 20_000;
+
+/** Loggar hur lång tid varje steg tar (syns under Edge Functions → Logs). */
+function timer() {
+  const start = Date.now();
+  return (step: string) => console.log(`read-label ${step} ${Date.now() - start}ms`);
+}
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -40,6 +55,7 @@ async function readText(image: string, key: string): Promise<string> {
   const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${encodeURIComponent(key)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(VISION_TIMEOUT_MS),
     body: JSON.stringify({
       requests: [{
         image: { content: image },
@@ -77,9 +93,21 @@ async function findWines(queries: string[]) {
   });
 }
 
+// Alla fel (även databas och tidsgränser) blir ett JSON-svar med CORS, så att
+// appen kan visa ett meddelande i stället för att vänta.
 Deno.serve(async (req) => {
+  try {
+    return await handle(req);
+  } catch (err) {
+    console.error("read-label fel", err instanceof Error ? err.message : err);
+    return json({ error: "failed" }, 500);
+  }
+});
+
+async function handle(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  const log = timer();
   const user = userId(req);
   if (!user) return json({ error: "unauthorized" }, 401);
   // Bara den som löst in en inbjudningskod (eller är admin), som i appen.
@@ -87,11 +115,13 @@ Deno.serve(async (req) => {
     select coalesce((select approved_at is not null from public.profiles where id = ${user}), false)
         or exists (select 1 from auth.users u join private.admin_emails a on a.email = lower(u.email)
                    where u.id = ${user} and u.email_confirmed_at is not null) as ok`;
+  log("access");
   if (!access?.ok) return json({ error: "not_approved" }, 403);
   const key = Deno.env.get("GOOGLE_VISION_API_KEY");
   if (!key) return json({ error: "not_configured" }, 503);
 
   const body = await req.json().catch(() => ({}));
+  log(`body ${typeof body.image === "string" ? Math.round(body.image.length / 1024) : 0}kB`);
   const image = typeof body.image === "string" ? body.image.replace(/^data:image\/\w+;base64,/, "") : "";
   if (!image || image.length > MAX_IMAGE_BYTES * 1.37) return json({ error: "bad_image" }, 400);
 
@@ -103,13 +133,17 @@ Deno.serve(async (req) => {
     return json({ error: "quota" }, 429);
   }
   await sql`insert into private.label_reads (user_id) values (${user})`;
+  log("quota");
 
   try {
     const text = await readText(image, key);
+    log(`vision ${text.length} tecken`);
     const { queries, display, vintage } = labelQueries(text);
     const matches = queries.length ? await findWines(queries) : [];
+    log(`search ${matches.length} träffar`);
     return json({ text, display, vintage, matches });
   } catch (err) {
+    console.error("read-label fel", err instanceof Error ? err.message : err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 502);
   }
-});
+}

@@ -7,6 +7,7 @@ import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-nativ
 import { Body, Button, ErrorText, Field, Loading, Screen, T } from "../../components/ui.tsx";
 import { LabelError, lookupBarcode, readLabel } from "../../lib/api.ts";
 import { cameraRemembered, rememberCamera } from "../../lib/cameraConsent.ts";
+import { shrinkForUpload } from "../../lib/shrinkImage.ts";
 import { useT } from "../../lib/i18n.tsx";
 import { openManualAdd, setPendingLabel, setPendingScan } from "../../lib/scanStore.ts";
 import { useTheme } from "../../lib/theme.tsx";
@@ -32,14 +33,16 @@ export default function Scan() {
     setReading(true);
     setError(null);
     try {
-      const pic = await camera.current.takePictureAsync({ base64: true, quality: 0.6 });
-      if (!pic?.base64) throw new LabelError("failed");
-      const result = await readLabel(pic.base64);
+      // Telefonapp: lägre kvalitet räcker för text. Webb: krymps i shrinkForUpload.
+      const pic = await camera.current.takePictureAsync({ base64: true, quality: Platform.OS === "web" ? 0.9 : 0.4 });
+      const image = await shrinkForUpload(pic?.uri, pic?.base64);
+      if (!image) throw new LabelError("failed");
+      const result = await readLabel(image);
       setPendingLabel({ display: result.display, vintage: result.vintage, matches: result.matches });
       router.push("/register");
     } catch (e) {
       const code = e instanceof LabelError ? e.code : "failed";
-      setError(t(code === "not_configured" ? "labelNotConfigured" : code === "quota" ? "labelQuota" : "labelFailed"));
+      setError(t(code === "not_configured" ? "labelNotConfigured" : code === "quota" ? "labelQuota" : code === "timeout" ? "labelTimeout" : "labelFailed"));
     } finally {
       setReading(false);
     }

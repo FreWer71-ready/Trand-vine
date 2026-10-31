@@ -100,16 +100,29 @@ export interface LabelReadResult {
 
 /** Fel från etikettläsningen som visas med egen text. */
 export class LabelError extends Error {
-  constructor(public code: "not_configured" | "quota" | "failed") {
+  constructor(public code: "not_configured" | "quota" | "timeout" | "failed") {
     super(code);
   }
 }
 
 /** Skickar ett foto av etiketten (base64-jpeg) till Google Vision via read-label. */
 export async function readLabel(imageBase64: string): Promise<LabelReadResult> {
-  const { data, error } = await supabase.functions.invoke<LabelReadResult & { error?: string }>("read-label", {
-    body: { image: imageBase64 },
-  });
+  // Ge upp efter 30 s i stället för att snurra tills servern bryter (160 s).
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), 30_000);
+  let res;
+  try {
+    res = await supabase.functions.invoke<LabelReadResult & { error?: string }>("read-label", {
+      body: { image: imageBase64 },
+      signal: abort.signal,
+    });
+  } catch {
+    throw new LabelError(abort.signal.aborted ? "timeout" : "failed");
+  } finally {
+    clearTimeout(timer);
+  }
+  const { data, error } = res;
+  if (abort.signal.aborted) throw new LabelError("timeout");
   if (error) {
     // Funktionen svarar med en felkod i JSON även vid 4xx/5xx.
     const ctx = (error as { context?: Response }).context;
