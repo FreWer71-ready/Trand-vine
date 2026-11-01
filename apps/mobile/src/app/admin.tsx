@@ -1,6 +1,7 @@
 // Admin (som /admin i Fredrik55): inbjudningskoder och användare.
 // Visas bara för admin; databasen nekar alla andra (is_admin()).
 
+import * as Clipboard from "expo-clipboard";
 import { useCallback, useEffect, useState } from "react";
 import { Platform, View } from "react-native";
 import { Body, Button, Card, Chips, ErrorText, Field, Heading, Loading, Screen, T } from "../components/ui.tsx";
@@ -21,6 +22,12 @@ const MAX_USES = [1, 5, 20, 0]; // 0 = obegränsat
 const inviteLink = (code: string) =>
   `${Platform.OS === "web" ? globalThis.location?.origin : "https://wine.trand.se"}/?kod=${encodeURIComponent(code)}`;
 
+/** Lägger texten i urklipp: webbläsarens urklipp på webben, expo-clipboard i appen. */
+async function copyText(text: string) {
+  if (Platform.OS === "web") await globalThis.navigator.clipboard.writeText(text);
+  else await Clipboard.setStringAsync(text);
+}
+
 export default function Admin() {
   const t = useT();
   const { admin, session } = useAuth();
@@ -33,6 +40,27 @@ export default function Admin() {
   const [maxUses, setMaxUses] = useState(1);
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<string | null>(null);
+  // Koden vars meddelande nyss kopierades (kort bekräftelse).
+  const [copied, setCopied] = useState<string | null>(null);
+
+  /** Färdigt inbjudningsmeddelande för sms, Messenger eller mejl. */
+  async function copyInvite(code: string) {
+    setError(null);
+    try {
+      await copyText(t("inviteMessage", { link: inviteLink(code), code }));
+      setCopied(code);
+      setTimeout(() => setCopied((c) => (c === code ? null : c)), 2500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("error"));
+    }
+  }
+
+  const copyButton = (code: string) => (
+    <>
+      <Button title={t("copyMessage")} variant="secondary" onPress={() => void copyInvite(code)} />
+      {copied === code && <Body>{t("messageCopied")}</Body>}
+    </>
+  );
 
   const load = useCallback(async () => {
     try {
@@ -103,6 +131,7 @@ export default function Admin() {
           <T variant="label">{t("adminCreated")}</T>
           <T variant="title">{created}</T>
           <Body muted>{inviteLink(created)}</Body>
+          {copyButton(created)}
         </Card>
       )}
       <ErrorText>{error}</ErrorText>
@@ -123,6 +152,7 @@ export default function Admin() {
             variant="secondary"
             onPress={() => act(() => adminSetCodeActive(c.code, !c.active))}
           />
+          {copyButton(c.code)}
         </Card>
       ))}
 

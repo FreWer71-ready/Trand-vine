@@ -2,6 +2,7 @@ import type { Session } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Locale } from "@trand-vine/core";
 import { claimPendingTransfer } from "./account.ts";
+import { isAdminEntry } from "./adminEntry.ts";
 import { getProfile, isAdmin, type Profile } from "./api.ts";
 import { deviceLocale } from "./i18n.tsx";
 import { supabase } from "./supabase.ts";
@@ -16,6 +17,8 @@ interface AuthState {
   /** Har löst in en inbjudningskod (eller är admin). */
   approved: boolean;
   admin: boolean;
+  /** Webbappen öppnades på /admin: ingen anonym session, egen inloggning. */
+  adminEntry: boolean;
   refreshProfile(): Promise<void>;
 }
 
@@ -28,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [admin, setAdmin] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [adminEntry] = useState(isAdminEntry);
 
   const refreshProfile = useCallback(async () => {
     await claimPendingTransfer();
@@ -40,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       let current = data.session;
-      if (!current) {
+      if (!current && !adminEntry) {
         const res = await supabase.auth.signInAnonymously();
         if (res.error) setError(res.error.message);
         current = res.data.session;
@@ -68,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         locale: profile?.locale ?? deviceLocale(),
         approved: !!profile?.approved_at || admin,
         admin,
+        adminEntry,
         refreshProfile,
       }}
     >

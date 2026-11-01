@@ -3,18 +3,22 @@ import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { Body, ErrorText, Loading, Screen, Title } from "../components/ui.tsx";
+import { AdminLogin, NoAdminAccess } from "../components/AdminEntry.tsx";
 import { InviteGate } from "../components/InviteGate.tsx";
 import { AuthProvider, useAuth } from "../lib/auth.tsx";
 import { LocaleProvider, useT } from "../lib/i18n.tsx";
 import { ThemeProvider, useTheme, useThemeFonts } from "../lib/theme.tsx";
 
 function RootStack() {
-  const { session, loading, error, locale, approved } = useAuth();
+  const { session, loading, error, locale, approved, admin, adminEntry } = useAuth();
   const fontsReady = useThemeFonts();
   if (loading || !fontsReady) return <Loading />;
+  // /admin (webb): egen inloggning, ingen inbjudningsspärr. Ett anonymt konto räknas som utloggat.
+  const adminContent =
+    !session || session.user.is_anonymous ? <AdminLogin /> : !admin ? <NoAdminAccess /> : <Screens />;
   return (
     <LocaleProvider locale={locale}>
-      {!session ? <StartError error={error} /> : !approved ? <InviteGate /> : <Screens />}
+      {adminEntry ? adminContent : !session ? <StartError error={error} /> : !approved ? <InviteGate /> : <Screens />}
     </LocaleProvider>
   );
 }
