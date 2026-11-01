@@ -34,6 +34,18 @@ export async function claimPendingTransfer() {
   }
 }
 
+/**
+ * Anonym enhet som loggar in på ett befintligt konto: skapa en flyttbiljett
+ * och spara den, så att claimPendingTransfer flyttar flaskorna efteråt.
+ */
+async function prepareTransfer(): Promise<string | null> {
+  const { data } = await supabase.auth.getUser();
+  if (!data.user?.is_anonymous) return null;
+  const ticket = await createTransferTicket();
+  if (ticket) await AsyncStorage.setItem(TICKET_KEY, ticket).catch(() => undefined);
+  return ticket;
+}
+
 export type EmailFlow = { mode: "link" } | { mode: "existing"; ticket: string | null };
 
 export async function sendEmailCode(email: string): Promise<EmailFlow> {
@@ -43,8 +55,7 @@ export async function sendEmailCode(email: string): Promise<EmailFlow> {
     if (!error) return { mode: "link" };
     if (error.code !== "email_exists") throw error;
     // Kontot finns: ta med den här enhetens flaskor vid inloggningen.
-    const ticket = await createTransferTicket();
-    if (ticket) await AsyncStorage.setItem(TICKET_KEY, ticket).catch(() => undefined);
+    const ticket = await prepareTransfer();
     const res = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: redirectTo() } });
     if (res.error) throw res.error;
     return { mode: "existing", ticket };
@@ -62,6 +73,33 @@ export async function verifyEmailCode(email: string, code: string, flow: EmailFl
   });
   if (error) throw error;
   if (flow.mode === "existing") await claimPendingTransfer();
+}
+
+/** Felet Supabase ger för fel e-post eller lösenord. */
+export class WrongPasswordError extends Error {}
+
+/**
+ * Lösenord: bara för befintliga konton som har ett lösenord (nya konton
+ * använder engångskod). Flaskorna på en anonym enhet flyttas som vid kod.
+ * transfer = false på adminingången, där ingen källare ska flyttas.
+ */
+export async function signInWithPassword(email: string, password: string, transfer = true) {
+  if (transfer) await prepareTransfer();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    if (error.code === "invalid_credentials" || /invalid login credentials/i.test(error.message)) {
+      throw new WrongPasswordError(error.message);
+    }
+    throw error;
+  }
+  await claimPendingTransfer();
+}
+
+/** Adminingången: logga in på ett befintligt konto med kod, utan att flytta någon källare. */
+export async function sendLoginCode(email: string): Promise<EmailFlow> {
+  const res = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: redirectTo() } });
+  if (res.error) throw res.error;
+  return { mode: "existing", ticket: null };
 }
 
 /** Logga ut; appen startar då en ny anonym session. */
