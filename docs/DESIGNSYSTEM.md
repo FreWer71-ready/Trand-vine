@@ -8,7 +8,7 @@ att byta tema – komponenterna ändras inte.
 |---|---|---|---|
 | `party` | Nöjesappar (fester, spel, tävlingar) | Partyplan / [Fredrik55](https://github.com/FreWer71-ready/Fredrik55) | Natthimmel, cerise, turkos, solgul. Fredoka + Nunito. Rundat, knappar med 3D-tryck. Alltid mörkt. |
 | `tour` | Resor, samlingar, klassiska appar | [Mallorca Golf Tour](https://github.com/FreWer71-ready/golftour) | Vintageaffisch: pergament, vinröd, guld. Abril Fatface, Fraunces, Lora, Special Elite, IBM Plex Mono. Ljust och mörkt läge. |
-| `trand` | Trands egna appar (TrandWine, TrandStyle) | [trand.se](https://trand.se) (`styles.css`) | Mörk marinblå, blå accent, ljusa knappar. Inter. Etiketter i versaler med spärrning. Alltid mörkt. |
+| `trand` | Trands appar (TrandWine, TrandStyle) | [TrandStyle](https://github.com/FreWer71-ready/trandstyle) (`public/stil.css`) | Kräm, brons och guld, brunt sidhuvud, ljusa kort med tunn kant. Inter. Etiketter i versaler med spärrning. Ljust och mörkt läge. |
 
 **TrandWine använder `trand`.** `EXPO_PUBLIC_APP_THEME=tour` eller `party` ger de andra utseendena.
 
@@ -20,7 +20,7 @@ Alla teman definierar samma nycklar (`packages/design/src/tokens.ts`):
 
 - **Färg:** `background`, `surface`, `surfaceRaised`, `highlight`, `border`,
   `text`, `textMuted`, `primary`/`onPrimary`/`primaryEdge`,
-  `secondary`/`onSecondary`/`secondaryEdge`, `accent`, `navActive`, `title`,
+  `secondary`/`onSecondary`/`secondaryEdge`, `accent`, `navActive`, `title`, `header`/`onHeader`,
   `success`, `warning`, `danger`, `tag`/`onTag`
 - **Typsnitt** (roller): `display`, `heading`, `body`, `bodyStrong`, `label`, `data`
   – vart och ett med CSS-stack, React Native-namn och Google Fonts-familj

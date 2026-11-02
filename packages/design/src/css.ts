@@ -22,7 +22,7 @@ const block = (selector: string, vars: Record<string, string>, extra = "") =>
 
 /**
  * Komplett stilmall för en familj. Ljust läge på :root, mörkt via
- * prefers-color-scheme och [data-theme="dark"]; party och trand är alltid mörka.
+ * prefers-color-scheme och [data-theme="dark"]; party är alltid mörk.
  */
 export function familyCss(family: ThemeFamily): string {
   const { light, dark } = themes[family];

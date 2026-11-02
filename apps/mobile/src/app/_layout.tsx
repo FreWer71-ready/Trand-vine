@@ -45,9 +45,9 @@ function Screens() {
       <StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: theme.colors.surfaceRaised },
-          headerTintColor: theme.colors.navActive,
-          headerTitleStyle: { fontFamily: theme.fonts.heading.native, color: theme.colors.text },
+          headerStyle: { backgroundColor: theme.colors.header },
+          headerTintColor: theme.colors.onHeader,
+          headerTitleStyle: { fontFamily: theme.fonts.heading.native, color: theme.colors.onHeader },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: theme.colors.background },
         }}
