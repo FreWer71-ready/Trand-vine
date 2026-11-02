@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { familyCss, googleFontsUrl, themeVariables } from "../src/css.ts";
-import { getTheme, nativeFontNames, party, themes, tourDark, tourLight, trand, type Theme } from "../src/tokens.ts";
+import { getTheme, nativeFontNames, party, themes, tourDark, tourLight, trandDark, trandLight, type Theme } from "../src/tokens.ts";
 
 // WCAG-kontrast mellan två hexfärger.
 function luminance(hex: string): number {
@@ -14,7 +14,7 @@ const contrast = (a: string, b: string) => {
   const [l1, l2] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
   return (l1 + 0.05) / (l2 + 0.05);
 };
-const all: Theme[] = [party, tourLight, tourDark, trand];
+const all: Theme[] = [party, tourLight, tourDark, trandLight, trandDark];
 
 describe("tokens", () => {
   it("every theme defines the same token keys", () => {
@@ -30,11 +30,12 @@ describe("tokens", () => {
     }
   });
 
-  it("party is always dark, tour follows the mode", () => {
+  it("party is always dark, tour and trand follow the mode", () => {
     expect(getTheme("party", "light")).toBe(party);
     expect(getTheme("tour", "light")).toBe(tourLight);
     expect(getTheme("tour", "dark")).toBe(tourDark);
-    expect(getTheme("trand", "light")).toBe(trand);
+    expect(getTheme("trand", "light")).toBe(trandLight);
+    expect(getTheme("trand", "dark")).toBe(trandDark);
   });
 
   it("lists native fonts to load", () => {

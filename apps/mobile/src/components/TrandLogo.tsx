@@ -16,10 +16,21 @@ const SOURCES = {
   },
 } as const;
 
-/** mark = monogrammet, lockup = monogram och ordmärke. height i px. */
-export function TrandLogo({ variant = "lockup", height = 28 }: { variant?: keyof typeof SOURCES; height?: number }) {
+/**
+ * mark = monogrammet, lockup = monogram och ordmärke. height i px. tone väljer
+ * variant oberoende av tema, t.ex. "dark" (mörk ikonruta) på ett färgat sidhuvud.
+ */
+export function TrandLogo({
+  variant = "lockup",
+  height = 28,
+  tone,
+}: {
+  variant?: keyof typeof SOURCES;
+  height?: number;
+  tone?: "light" | "dark";
+}) {
   const { mode } = useTheme();
-  const { src, ratio } = SOURCES[variant][mode];
+  const { src, ratio } = SOURCES[variant][tone ?? mode];
   return (
     <View accessible accessibilityRole="image" accessibilityLabel="Trand">
       <Image source={src} resizeMode="contain" style={{ height, width: height * ratio }} />

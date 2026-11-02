@@ -23,11 +23,11 @@ export default function TabsLayout() {
           letterSpacing: theme.label.letterSpacing,
           textTransform: theme.label.uppercase ? "uppercase" : "none",
         },
-        headerStyle: { backgroundColor: c.surfaceRaised },
-        headerTitleStyle: { fontFamily: theme.fonts.heading.native, color: c.text },
+        headerStyle: { backgroundColor: c.header },
+        headerTitleStyle: { fontFamily: theme.fonts.heading.native, color: c.onHeader },
         headerRight: () => (
           <View style={{ marginRight: theme.space.lg }}>
-            <TrandLogo variant="mark" height={26} />
+            <TrandLogo variant="mark" height={26} tone="dark" />
           </View>
         ),
         headerShadowVisible: false,

@@ -5,8 +5,8 @@
 //           cerise, turkos och solgul, rundade former, knappar med 3D-tryck.
 //   tour  – utgår från Mallorca Golf Tour: vintageaffisch med pergament,
 //           vinröd och guld, serifer och skrivmaskinsetiketter.
-//   trand – Trands egen stil (trand.se/styles.css, som i TrandStyle): mörk
-//           marinblå, blå accent, Inter. Alltid mörkt.
+//   trand – Trands appstil, som TrandStyle (public/stil.css i trandstyle):
+//           kräm, brons och guld, brunt sidhuvud, Inter. Ljust och mörkt läge.
 //
 // Komponenter ska bara läsa semantiska tokens (surface, primary, …), aldrig
 // palettens råa färger, så att de fungerar i båda familjerna.
@@ -39,6 +39,9 @@ export interface ColorTokens {
   navActive: string;
   /** Sidtitlar (display-typsnittet). */
   title: string;
+  /** Sidhuvud (överst på skärmen) och text/ikoner på det. */
+  header: string;
+  onHeader: string;
   success: string;
   warning: string;
   danger: string;
@@ -145,6 +148,8 @@ export const party: Theme = {
     accent: partyPalette.solgul,
     navActive: partyPalette.solgul,
     title: partyPalette.solgul,
+    header: partyPalette.natt2,
+    onHeader: "#ffffff",
     success: partyPalette.ok,
     warning: partyPalette.orange,
     danger: partyPalette.faraLjus,
@@ -207,6 +212,8 @@ export const tourLight: Theme = {
     accent: "#7a5822",
     navActive: "#6e1d2b",
     title: "#6e1d2b",
+    header: "#ead9aa",
+    onHeader: "#111c2e",
     success: "#2f4a2a", // fairway
     warning: "#7d4c08",
     danger: "#8a1c2c",
@@ -237,6 +244,8 @@ export const tourDark: Theme = {
     accent: "#e0bd7c",
     navActive: "#e0bd7c",
     title: "#e0bd7c",
+    header: "#30251a",
+    onHeader: "#fbf3dc",
     success: "#8fa379",
     warning: "#e0bd7c",
     danger: "#e0687a",
@@ -248,51 +257,15 @@ export const tourDark: Theme = {
 
 // ---------------------------------------------------------------- trand ---
 
-// Färger från trand.se/styles.css.
-const trandPalette = {
-  bg: "#0b1220",
-  surface: "#121a2b",
-  raised: "#101a2e",
-  text: "#eef1f6",
-  muted: "#9aa5b8",
-  line: "#223049",
-  accent: "#6c93ff",
-  accentSoft: "#16233f",
-  ok: "#4cc27a",
-};
+// Färger från TrandStyle (public/stil.css). Grönt, orange och dämpad text i
+// ljust läge är något mörkare än i Style, för att klara WCAG AA mot bakgrunden.
+const trandHeader = { header: "#8a5a2b", onHeader: "#fff8e8" }; // brons, som Styles sidhuvud
 
 const inter = (weight: number, native: string): FontToken =>
   font('"Inter", system-ui, -apple-system, "Segoe UI", sans-serif', native, `Inter:wght@${weight}`);
 
-export const trand: Theme = {
-  family: "trand",
-  mode: "dark",
-  name: "Trand",
-  colors: {
-    background: trandPalette.bg,
-    surface: trandPalette.surface,
-    surfaceRaised: trandPalette.raised,
-    highlight: trandPalette.accentSoft,
-    border: trandPalette.line,
-    text: trandPalette.text,
-    textMuted: trandPalette.muted,
-    // Som .btn på trand.se: ljus knapp med mörk text.
-    primary: trandPalette.text,
-    onPrimary: trandPalette.bg,
-    primaryEdge: trandPalette.text,
-    secondary: "transparent",
-    onSecondary: trandPalette.text,
-    secondaryEdge: trandPalette.line,
-    accent: trandPalette.accent,
-    navActive: trandPalette.accent,
-    // Som rubrikerna på trand.se: vita, accenten används sparsamt.
-    title: trandPalette.text,
-    success: trandPalette.ok,
-    warning: "#f0b24a",
-    danger: "#ff6b7a",
-    tag: trandPalette.accentSoft,
-    onTag: trandPalette.text,
-  },
+const trandBase = {
+  family: "trand" as const,
   fonts: {
     display: inter(800, "Inter_800ExtraBold"),
     heading: inter(700, "Inter_700Bold"),
@@ -303,17 +276,78 @@ export const trand: Theme = {
   },
   type: { display: 34, title: 28, heading: 20, body: 17, small: 15, label: 13 },
   space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 },
-  radius: { card: 14, button: 10, field: 10, chip: 999 },
-  button: { style: "flat", uppercase: false, letterSpacing: 0, font: "label", edgeHeight: 0 },
-  // Som .eyebrow på trand.se: versaler med spärrning.
+  radius: { card: 12, button: 8, field: 8, chip: 999 },
+  button: { style: "flat" as const, uppercase: false, letterSpacing: 0, font: "label" as const, edgeHeight: 0 },
+  // Som h3 i Style: små versaler med spärrning.
   label: { uppercase: true, letterSpacing: 1 },
-  backgroundCss: trandPalette.bg,
+};
+
+export const trandLight: Theme = {
+  ...trandBase,
+  mode: "light",
+  name: "Trand, ljus",
+  colors: {
+    background: "#f3ead9",
+    surface: "#fffaf0", // yta
+    surfaceRaised: "#fffaf0",
+    highlight: "#ecdbb6", // fokus (guld 35 %) på yta
+    border: "#e3d4b8", // linje
+    text: "#2a1f14",
+    textMuted: "#766655", // dov
+    primary: "#8a5a2b", // brons
+    onPrimary: "#ffffff",
+    primaryEdge: "#8a5a2b",
+    secondary: "transparent",
+    onSecondary: "#2a1f14",
+    secondaryEdge: "#e3d4b8",
+    accent: "#8a5a2b",
+    navActive: "#8a5a2b",
+    title: "#2a1f14",
+    ...trandHeader,
+    success: "#2b764b",
+    warning: "#a94e08",
+    danger: "#b42318",
+    tag: "#e3d4b8",
+    onTag: "#2a1f14",
+  },
+  backgroundCss: "#f3ead9",
+};
+
+export const trandDark: Theme = {
+  ...trandBase,
+  mode: "dark",
+  name: "Trand, mörk",
+  colors: {
+    background: "#1a1511",
+    surface: "#241d17",
+    surfaceRaised: "#241d17",
+    highlight: "#5a4624", // fokus (guld 30 %) på yta
+    border: "#3a2f24",
+    text: "#f1e8d8",
+    textMuted: "#b3a48d",
+    primary: "#d9a441", // guld
+    onPrimary: "#1a1208",
+    primaryEdge: "#d9a441",
+    secondary: "transparent",
+    onSecondary: "#f1e8d8",
+    secondaryEdge: "#3a2f24",
+    accent: "#d9a441",
+    navActive: "#d9a441",
+    title: "#f1e8d8",
+    ...trandHeader,
+    success: "#6fcf97",
+    warning: "#f0b35a",
+    danger: "#ff8a80",
+    tag: "#3a2f24",
+    onTag: "#f1e8d8",
+  },
+  backgroundCss: "#1a1511",
 };
 
 export const themes = {
   party: { light: party, dark: party }, // Partyplan är alltid mörk.
   tour: { light: tourLight, dark: tourDark },
-  trand: { light: trand, dark: trand }, // Trand är alltid mörk.
+  trand: { light: trandLight, dark: trandDark },
 } satisfies Record<ThemeFamily, Record<ColorMode, Theme>>;
 
 export function getTheme(family: ThemeFamily, mode: ColorMode): Theme {
