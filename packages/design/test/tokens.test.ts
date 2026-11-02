@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { familyCss, googleFontsUrl, themeVariables } from "../src/css.ts";
-import { getTheme, nativeFontNames, party, themes, tourDark, tourLight, type Theme } from "../src/tokens.ts";
+import { getTheme, nativeFontNames, party, themes, tourDark, tourLight, trand, type Theme } from "../src/tokens.ts";
 
 // WCAG-kontrast mellan två hexfärger.
 function luminance(hex: string): number {
@@ -14,7 +14,7 @@ const contrast = (a: string, b: string) => {
   const [l1, l2] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
   return (l1 + 0.05) / (l2 + 0.05);
 };
-const all: Theme[] = [party, tourLight, tourDark];
+const all: Theme[] = [party, tourLight, tourDark, trand];
 
 describe("tokens", () => {
   it("every theme defines the same token keys", () => {
@@ -34,11 +34,13 @@ describe("tokens", () => {
     expect(getTheme("party", "light")).toBe(party);
     expect(getTheme("tour", "light")).toBe(tourLight);
     expect(getTheme("tour", "dark")).toBe(tourDark);
+    expect(getTheme("trand", "light")).toBe(trand);
   });
 
   it("lists native fonts to load", () => {
     expect(nativeFontNames("tour")).toContain("AbrilFatface_400Regular");
     expect(nativeFontNames("party")).toContain("Fredoka_700Bold");
+    expect(nativeFontNames("trand")).toContain("Inter_800ExtraBold");
   });
 });
 

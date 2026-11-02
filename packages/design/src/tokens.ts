@@ -5,11 +5,13 @@
 //           cerise, turkos och solgul, rundade former, knappar med 3D-tryck.
 //   tour  – utgår från Mallorca Golf Tour: vintageaffisch med pergament,
 //           vinröd och guld, serifer och skrivmaskinsetiketter.
+//   trand – Trands egen stil (trand.se/styles.css, som i TrandStyle): mörk
+//           marinblå, blå accent, Inter. Alltid mörkt.
 //
 // Komponenter ska bara läsa semantiska tokens (surface, primary, …), aldrig
 // palettens råa färger, så att de fungerar i båda familjerna.
 
-export type ThemeFamily = "party" | "tour";
+export type ThemeFamily = "party" | "tour" | "trand";
 export type ColorMode = "light" | "dark";
 
 export interface ColorTokens {
@@ -35,6 +37,8 @@ export interface ColorTokens {
   accent: string;
   /** Aktiv flik och länkar i navigeringen. */
   navActive: string;
+  /** Sidtitlar (display-typsnittet). */
+  title: string;
   success: string;
   warning: string;
   danger: string;
@@ -140,6 +144,7 @@ export const party: Theme = {
     secondaryEdge: partyPalette.turkosKant,
     accent: partyPalette.solgul,
     navActive: partyPalette.solgul,
+    title: partyPalette.solgul,
     success: partyPalette.ok,
     warning: partyPalette.orange,
     danger: partyPalette.faraLjus,
@@ -201,6 +206,7 @@ export const tourLight: Theme = {
     secondaryEdge: "#7a5822", // gold
     accent: "#7a5822",
     navActive: "#6e1d2b",
+    title: "#6e1d2b",
     success: "#2f4a2a", // fairway
     warning: "#7d4c08",
     danger: "#8a1c2c",
@@ -230,6 +236,7 @@ export const tourDark: Theme = {
     secondaryEdge: "#c9a15c",
     accent: "#e0bd7c",
     navActive: "#e0bd7c",
+    title: "#e0bd7c",
     success: "#8fa379",
     warning: "#e0bd7c",
     danger: "#e0687a",
@@ -239,9 +246,74 @@ export const tourDark: Theme = {
   backgroundCss: "#100c07",
 };
 
+// ---------------------------------------------------------------- trand ---
+
+// Färger från trand.se/styles.css.
+const trandPalette = {
+  bg: "#0b1220",
+  surface: "#121a2b",
+  raised: "#101a2e",
+  text: "#eef1f6",
+  muted: "#9aa5b8",
+  line: "#223049",
+  accent: "#6c93ff",
+  accentSoft: "#16233f",
+  ok: "#4cc27a",
+};
+
+const inter = (weight: number, native: string): FontToken =>
+  font('"Inter", system-ui, -apple-system, "Segoe UI", sans-serif', native, `Inter:wght@${weight}`);
+
+export const trand: Theme = {
+  family: "trand",
+  mode: "dark",
+  name: "Trand",
+  colors: {
+    background: trandPalette.bg,
+    surface: trandPalette.surface,
+    surfaceRaised: trandPalette.raised,
+    highlight: trandPalette.accentSoft,
+    border: trandPalette.line,
+    text: trandPalette.text,
+    textMuted: trandPalette.muted,
+    // Som .btn på trand.se: ljus knapp med mörk text.
+    primary: trandPalette.text,
+    onPrimary: trandPalette.bg,
+    primaryEdge: trandPalette.text,
+    secondary: "transparent",
+    onSecondary: trandPalette.text,
+    secondaryEdge: trandPalette.line,
+    accent: trandPalette.accent,
+    navActive: trandPalette.accent,
+    // Som rubrikerna på trand.se: vita, accenten används sparsamt.
+    title: trandPalette.text,
+    success: trandPalette.ok,
+    warning: "#f0b24a",
+    danger: "#ff6b7a",
+    tag: trandPalette.accentSoft,
+    onTag: trandPalette.text,
+  },
+  fonts: {
+    display: inter(800, "Inter_800ExtraBold"),
+    heading: inter(700, "Inter_700Bold"),
+    body: inter(400, "Inter_400Regular"),
+    bodyStrong: inter(600, "Inter_600SemiBold"),
+    label: inter(600, "Inter_600SemiBold"),
+    data: inter(500, "Inter_500Medium"),
+  },
+  type: { display: 34, title: 28, heading: 20, body: 17, small: 15, label: 13 },
+  space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 },
+  radius: { card: 14, button: 10, field: 10, chip: 999 },
+  button: { style: "flat", uppercase: false, letterSpacing: 0, font: "label", edgeHeight: 0 },
+  // Som .eyebrow på trand.se: versaler med spärrning.
+  label: { uppercase: true, letterSpacing: 1 },
+  backgroundCss: trandPalette.bg,
+};
+
 export const themes = {
   party: { light: party, dark: party }, // Partyplan är alltid mörk.
   tour: { light: tourLight, dark: tourDark },
+  trand: { light: trand, dark: trand }, // Trand är alltid mörk.
 } satisfies Record<ThemeFamily, Record<ColorMode, Theme>>;
 
 export function getTheme(family: ThemeFamily, mode: ColorMode): Theme {
