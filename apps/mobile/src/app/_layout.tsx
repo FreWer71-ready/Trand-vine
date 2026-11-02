@@ -5,6 +5,7 @@ import { View } from "react-native";
 import { Body, ErrorText, Loading, Screen, Title } from "../components/ui.tsx";
 import { AdminLogin, NoAdminAccess } from "../components/AdminEntry.tsx";
 import { InviteGate } from "../components/InviteGate.tsx";
+import { TrandLogo } from "../components/TrandLogo.tsx";
 import { AuthProvider, useAuth } from "../lib/auth.tsx";
 import { LocaleProvider, useT } from "../lib/i18n.tsx";
 import { ThemeProvider, useTheme, useThemeFonts } from "../lib/theme.tsx";
@@ -28,6 +29,7 @@ function StartError({ error }: { error: string | null }) {
   const t = useT();
   return (
     <Screen>
+      <TrandLogo variant="lockup" height={28} />
       <Title>{t("appName")}</Title>
       <Body>{t("startFailed")}</Body>
       <ErrorText>{error}</ErrorText>

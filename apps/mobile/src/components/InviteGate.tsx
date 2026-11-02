@@ -18,6 +18,7 @@ import { useAuth } from "../lib/auth.tsx";
 import { useT } from "../lib/i18n.tsx";
 import { EmailLogin } from "./EmailLogin.tsx";
 import { Body, Button, Card, ErrorText, Field, Heading, Screen, Title } from "./ui.tsx";
+import { TrandLogo } from "./TrandLogo.tsx";
 
 export function InviteGate() {
   const t = useT();
@@ -43,6 +44,7 @@ export function InviteGate() {
 
   return (
     <Screen>
+      <TrandLogo variant="lockup" height={28} />
       <Title>{t("appName")}</Title>
       <Body>{t("inviteIntro")}</Body>
       <Field

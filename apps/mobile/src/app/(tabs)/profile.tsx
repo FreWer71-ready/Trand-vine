@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { EmailLogin } from "../../components/EmailLogin.tsx";
+import { TrandLogo } from "../../components/TrandLogo.tsx";
+import { View } from "react-native";
 import { Body, Button, Card, Chips, ErrorText, Field, Heading, Screen } from "../../components/ui.tsx";
 import { signOut } from "../../lib/account.ts";
 import { updateProfile } from "../../lib/api.ts";
@@ -64,6 +66,9 @@ export default function Profile() {
         </>
       )}
       {admin && <Button title={t("admin")} variant="secondary" onPress={() => router.push("/admin")} />}
+      <View style={{ alignItems: "center", marginTop: 24, opacity: 0.85 }}>
+        <TrandLogo variant="lockup" height={24} />
+      </View>
     </Screen>
   );
 }

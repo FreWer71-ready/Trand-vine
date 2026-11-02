@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router/tabs";
-import { Text, type ColorValue } from "react-native";
+import { Text, View, type ColorValue } from "react-native";
+import { TrandLogo } from "../../components/TrandLogo.tsx";
 import { useT } from "../../lib/i18n.tsx";
 import { useTheme } from "../../lib/theme.tsx";
 
@@ -24,6 +25,11 @@ export default function TabsLayout() {
         },
         headerStyle: { backgroundColor: c.surfaceRaised },
         headerTitleStyle: { fontFamily: theme.fonts.heading.native, color: c.text },
+        headerRight: () => (
+          <View style={{ marginRight: theme.space.lg }}>
+            <TrandLogo variant="mark" height={26} />
+          </View>
+        ),
         headerShadowVisible: false,
         sceneStyle: { backgroundColor: c.background },
       }}

@@ -3,8 +3,8 @@ import { familyCss, googleFontsUrl } from "./css.ts";
 import type { ThemeFamily } from "./tokens.ts";
 
 const family = process.argv[2] as ThemeFamily;
-if (family !== "party" && family !== "tour") {
-  console.error("Användning: cli.ts party|tour");
+if (family !== "party" && family !== "tour" && family !== "trand") {
+  console.error("Användning: cli.ts party|tour|trand");
   process.exit(1);
 }
 process.stdout.write(`/* Typsnitt: <link rel="stylesheet" href="${googleFontsUrl(family)}"> */\n\n${familyCss(family)}`);

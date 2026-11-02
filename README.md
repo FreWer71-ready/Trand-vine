@@ -6,7 +6,7 @@ lagring, drickfönster, servering, mat och tillfälle. Har du haft vinet förut
 visas din historik direkt.
 
 Bakgrund och beslut: [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md).
-Utseendet kommer från designsystemet i [docs/DESIGNSYSTEM.md](docs/DESIGNSYSTEM.md) (temat Tour).
+Utseendet kommer från designsystemet i [docs/DESIGNSYSTEM.md](docs/DESIGNSYSTEM.md) (temat Trand, som trand.se).
 
 <p>
   <img src="docs/screenshots/cellar.png" width="240" alt="Källare" />

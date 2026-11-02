@@ -1,11 +1,12 @@
-// Appens tema från designsystemet (packages/design): "tour" (Mallorca) är
-// TrandWines utseende. EXPO_PUBLIC_APP_THEME=party ger Partyplan-utseendet,
-// t.ex. för att förhandsgranska.
+// Appens tema från designsystemet (packages/design): "trand" (Trands egen stil,
+// som trand.se och TrandStyle) är TrandWines utseende. EXPO_PUBLIC_APP_THEME=tour
+// eller party ger de andra utseendena, t.ex. för att förhandsgranska.
 
 import { AbrilFatface_400Regular } from "@expo-google-fonts/abril-fatface";
 import { Fraunces_600SemiBold } from "@expo-google-fonts/fraunces";
 import { Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold } from "@expo-google-fonts/fredoka";
 import { IBMPlexMono_500Medium } from "@expo-google-fonts/ibm-plex-mono";
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from "@expo-google-fonts/inter";
 import { Lora_400Regular, Lora_600SemiBold } from "@expo-google-fonts/lora";
 import { Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from "@expo-google-fonts/nunito";
 import { SpecialElite_400Regular } from "@expo-google-fonts/special-elite";
@@ -14,7 +15,8 @@ import { useFonts } from "expo-font";
 import { createContext, useContext, type ReactNode } from "react";
 import { useColorScheme } from "react-native";
 
-export const APP_THEME: ThemeFamily = process.env.EXPO_PUBLIC_APP_THEME === "party" ? "party" : "tour";
+const THEME_ENV = process.env.EXPO_PUBLIC_APP_THEME;
+export const APP_THEME: ThemeFamily = THEME_ENV === "party" || THEME_ENV === "tour" ? THEME_ENV : "trand";
 
 const FONT_ASSETS: Record<string, number> = {
   AbrilFatface_400Regular,
@@ -29,6 +31,11 @@ const FONT_ASSETS: Record<string, number> = {
   Nunito_400Regular,
   Nunito_600SemiBold,
   Nunito_700Bold,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
 };
 
 /** Laddar temats typsnitt. Returnerar true när de är klara (eller misslyckades). */
