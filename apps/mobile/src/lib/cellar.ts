@@ -1,6 +1,16 @@
 // Källarvyn: filtrering, sortering och gruppering av flaskor i lager.
 
-import { COLOR_LABELS, drinkPhase, type DrinkPhase, type Locale, type Recommendation, type WineColor } from "@trand-vine/core";
+import {
+  COLOR_LABELS,
+  FOOD_GROUP_ORDER,
+  drinkPhase,
+  foodGroupsFor,
+  type DrinkPhase,
+  type FoodGroup,
+  type Locale,
+  type Recommendation,
+  type WineColor,
+} from "@trand-vine/core";
 import type { BottleRow, CurrentPrice } from "./api.ts";
 import { recommendationFor } from "./format.ts";
 
@@ -26,9 +36,11 @@ export interface Filters {
   country: string;
   region: string;
   status: StatusFilter;
+  /** Passar till: matgrupp från vinets matförslag (Fisk, Vilt, Ost, Sällskap …). */
+  food: FoodGroup | "all";
 }
 
-export const NO_FILTERS: Filters = { color: "all", grape: "all", country: "all", region: "all", status: "all" };
+export const NO_FILTERS: Filters = { color: "all", grape: "all", country: "all", region: "all", status: "all", food: "all" };
 
 export const SORT_KEYS: SortKey[] = ["group", "urgency", "country", "region", "grape", "added", "purchased", "price"];
 
@@ -88,7 +100,7 @@ export function activeFilterCount(f: Filters): number {
 }
 
 export function applyFilters(items: CellarItem[], f: Filters): CellarItem[] {
-  return items.filter(({ bottle, phase }) => {
+  return items.filter(({ bottle, phase, rec }) => {
     const w = bottle.vintages.wines;
     if (f.color !== "all" && w.color !== f.color) return false;
     if (f.grape !== "all" && !w.grapes.includes(f.grape)) return false;
@@ -96,6 +108,7 @@ export function applyFilters(items: CellarItem[], f: Filters): CellarItem[] {
     if (f.region !== "all" && w.region !== f.region) return false;
     if (f.status === "ready" && phase === "too_young") return false;
     if (f.status === "keep" && phase !== "too_young") return false;
+    if (f.food !== "all" && !foodGroupsFor(rec).includes(f.food)) return false;
     return true;
   });
 }
@@ -105,6 +118,7 @@ export interface FilterOptions {
   grapes: string[];
   countries: string[];
   regions: string[];
+  foods: FoodGroup[];
 }
 
 /** Valmöjligheter hämtade från flaskorna själva, så man bara kan filtrera på det som finns. */
@@ -118,6 +132,8 @@ export function filterOptions(items: CellarItem[], locale: Locale): FilterOption
     grapes: uniq(wines.flatMap((w) => w.grapes)),
     countries: uniq(wines.map((w) => w.country)),
     regions: uniq(wines.map((w) => w.region)),
+    // Bara matgrupper som minst ett vin i källaren passar till.
+    foods: FOOD_GROUP_ORDER.filter((g) => items.some((i) => foodGroupsFor(i.rec).includes(g))),
   };
 }
 

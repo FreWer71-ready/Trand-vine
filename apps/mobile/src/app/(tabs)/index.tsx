@@ -1,7 +1,7 @@
 // Min källare: flaskor i lager. Standard: grupperat på vintyp och druva.
 // Kan filtreras (typ, druva, land, region, dricktid) och sorteras.
 
-import { COLOR_LABELS, PHASE_LABELS, type WineColor } from "@trand-vine/core";
+import { COLOR_LABELS, FOOD_GROUPS, PHASE_LABELS, type FoodGroup, type WineColor } from "@trand-vine/core";
 import { router, useFocusEffect } from "expo-router";
 import { Fragment, useCallback, useMemo, useState, type ReactNode } from "react";
 import { View } from "react-native";
@@ -176,6 +176,17 @@ export default function Cellar() {
       />
       {showFilters && (
         <Card>
+          {options.foods.length > 0 && (
+            <Chips
+              label={t("filterFood")}
+              value={filters.food}
+              onChange={(v) => setFilter("food", v)}
+              options={[
+                { value: "all" as FoodGroup | "all", label: t("filterAny") },
+                ...options.foods.map((g) => ({ value: g as FoodGroup | "all", label: FOOD_GROUPS[g].label[locale] })),
+              ]}
+            />
+          )}
           {options.colors.length > 1 && (
             <Chips
               label={t("filterType")}
