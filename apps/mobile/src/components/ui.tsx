@@ -15,6 +15,7 @@ import {
   type TextStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { READABLE_MAX, useLayout } from "../lib/layout.ts";
 import { useTheme } from "../lib/theme.tsx";
 
 export function phaseColor(theme: Theme, phase: DrinkPhase): string {
@@ -22,9 +23,20 @@ export function phaseColor(theme: Theme, phase: DrinkPhase): string {
   return { too_young: c.textMuted, ready: c.success, peak: c.success, past_peak: c.warning, over: c.danger }[phase];
 }
 
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+/**
+ * Skärmens innehåll. wide = listor som får använda hela ramens bredd (kort i
+ * kolumner); annars hålls innehållet till läsbar bredd på stora skärmar.
+ */
+export function Screen({ children, scroll = true, wide = false }: { children: ReactNode; scroll?: boolean; wide?: boolean }) {
   const theme = useTheme();
-  const content = { padding: theme.space.lg, gap: theme.space.md };
+  const { size } = useLayout();
+  const content = {
+    padding: size === "phone" ? theme.space.lg : theme.space.xl,
+    gap: theme.space.md,
+    width: "100%" as const,
+    maxWidth: wide ? undefined : READABLE_MAX,
+    alignSelf: "center" as const,
+  };
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["left", "right", "bottom"]}>
       {scroll ? (
@@ -35,6 +47,26 @@ export function Screen({ children, scroll = true }: { children: ReactNode; scrol
         <View style={[content, { flex: 1 }]}>{children}</View>
       )}
     </SafeAreaView>
+  );
+}
+
+/**
+ * Kort i kolumner: en kolumn på telefon, två på surfplatta, tre på dator.
+ * Varje barn blir en cell; cellerna i en rad får samma bredd.
+ */
+export function Grid({ children }: { children: ReactNode[] }) {
+  const theme = useTheme();
+  const { columns } = useLayout();
+  if (columns === 1) return <>{children}</>;
+  const gap = theme.space.md;
+  return (
+    <View style={{ flexDirection: "row", flexWrap: "wrap", marginHorizontal: -gap / 2, rowGap: gap }}>
+      {children.map((child, i) => (
+        <View key={i} style={{ width: `${100 / columns}%`, paddingHorizontal: gap / 2 }}>
+          {child}
+        </View>
+      ))}
+    </View>
   );
 }
 

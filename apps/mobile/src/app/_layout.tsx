@@ -8,6 +8,7 @@ import { InviteGate } from "../components/InviteGate.tsx";
 import { TrandLogo } from "../components/TrandLogo.tsx";
 import { AuthProvider, useAuth } from "../lib/auth.tsx";
 import { LocaleProvider, useT } from "../lib/i18n.tsx";
+import { useLayout } from "../lib/layout.ts";
 import { ThemeProvider, useTheme, useThemeFonts } from "../lib/theme.tsx";
 
 function RootStack() {
@@ -61,21 +62,23 @@ function Screens() {
   );
 }
 
-/** Mobile first: på bred skärm (webb på dator) visas appen som en mittcentrerad mobilkolumn. */
-const MAX_WIDTH = 480;
-
+/**
+ * Mobile first: telefonen får hela bredden. På surfplatta och dator centreras
+ * appen i en bredare ram (se lib/layout.ts).
+ */
 function AppFrame({ children }: { children: ReactNode }) {
   const { colors } = useTheme();
+  const { framed, frameMax } = useLayout();
   return (
-    <View style={{ flex: 1, alignItems: "center", backgroundColor: colors.surfaceRaised }}>
+    <View style={{ flex: 1, alignItems: "center", backgroundColor: framed ? colors.surfaceRaised : colors.background }}>
       <View
         style={{
           flex: 1,
           width: "100%",
-          maxWidth: MAX_WIDTH,
+          maxWidth: framed ? frameMax : undefined,
           backgroundColor: colors.background,
-          borderLeftWidth: 1,
-          borderRightWidth: 1,
+          borderLeftWidth: framed ? 1 : 0,
+          borderRightWidth: framed ? 1 : 0,
           borderColor: colors.border,
         }}
       >
