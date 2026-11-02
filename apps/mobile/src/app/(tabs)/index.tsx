@@ -3,9 +3,9 @@
 
 import { COLOR_LABELS, PHASE_LABELS, type WineColor } from "@trand-vine/core";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState, type ReactNode } from "react";
 import { View } from "react-native";
-import { Body, Button, Card, Chips, ErrorText, Loading, Screen, T, phaseColor } from "../../components/ui.tsx";
+import { Body, Button, Card, Chips, ErrorText, Grid, Loading, Screen, T, phaseColor } from "../../components/ui.tsx";
 import { currentPrices, listBottles, type BottleRow, type CurrentPrice } from "../../lib/api.ts";
 import {
   DEFAULT_DIR,
@@ -17,6 +17,7 @@ import {
   filterOptions,
   mergeIdentical,
   toItems,
+  type CellarItem,
   type Filters,
   type SortDir,
   type SortKey,
@@ -94,8 +95,58 @@ export default function Cellar() {
 
   const total = bottles.reduce((sum, b) => sum + b.quantity, 0);
 
+  const renderCard = ({ bottle, phase, rec, offer }: CellarItem, key: string) => (
+    <Card key={key} onPress={() => router.push(`/bottle/${bottle.id}`)}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: theme.space.md }}>
+        <View style={{ flex: 1 }}>
+          <T variant="cardTitle">{wineTitle(bottle.vintages)}</T>
+        </View>
+        {bottle.quantity > 1 && (
+          <View
+            accessibilityLabel={t("bottlesCount", { n: bottle.quantity })}
+            style={{
+              minWidth: 44,
+              alignItems: "center",
+              backgroundColor: theme.colors.primary,
+              borderRadius: theme.radius.chip,
+              paddingHorizontal: theme.space.md,
+              paddingVertical: theme.space.xs,
+            }}
+          >
+            <T variant="heading" color={theme.colors.onPrimary} style={{ marginTop: 0, paddingBottom: 0, borderBottomWidth: 0 }}>
+              {`×${bottle.quantity}`}
+            </T>
+          </View>
+        )}
+      </View>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <T variant="strong" color={phaseColor(theme, phase)}>{PHASE_LABELS[phase][locale]}</T>
+        <T variant="data" color={theme.colors.textMuted}>{rec.drinkFrom}–{rec.drinkTo}</T>
+      </View>
+      {bottle.price !== null && (
+        <T variant="muted">
+          {t("priceEach", {
+            price:
+              bottle.priceMax != null && bottle.priceMax !== bottle.price
+                ? `${formatPrice(bottle.price, bottle.currency, locale)}–${formatPrice(bottle.priceMax, bottle.currency, locale)}`
+                : formatPrice(bottle.price, bottle.currency, locale),
+          })}
+        </T>
+      )}
+      {offer && (
+        <T variant="muted">
+          {offer.probability >= 1
+            ? t("systembolagetPrice", { price: formatPrice(offer.price, "SEK", locale) })
+            : t("systembolagetIndication", { price: formatPrice(offer.price, "SEK", locale), pct: Math.round(offer.probability * 100) }) +
+              (offer.vintage !== null && offer.vintage !== bottle.vintages.year ? t("systembolagetVintage", { year: offer.vintage }) : "")}
+        </T>
+      )}
+      {bottle.location && <T variant="muted">{bottle.location}</T>}
+    </Card>
+  );
+
   return (
-    <Screen>
+    <Screen wide>
       <Button title={t("addBottleShort")} variant="secondary" onPress={openManualAdd} />
 
       <Chips
@@ -151,60 +202,28 @@ export default function Cellar() {
       )}
 
       {rows.length === 0 && <Body muted>{t("noMatches")}</Body>}
-      {rows.map((row) => {
-        if (row.kind === "heading") return <T key={row.key} variant="heading">{`${row.title} · ${row.count}`}</T>;
-        if (row.kind === "subheading") return <T key={row.key} variant="label">{`${row.title} · ${row.count}`}</T>;
-        const { bottle, phase, rec, offer } = row.item;
-        return (
-          <Card key={row.key} onPress={() => router.push(`/bottle/${bottle.id}`)}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: theme.space.md }}>
-              <View style={{ flex: 1 }}>
-                <T variant="cardTitle">{wineTitle(bottle.vintages)}</T>
-              </View>
-              {bottle.quantity > 1 && (
-                <View
-                  accessibilityLabel={t("bottlesCount", { n: bottle.quantity })}
-                  style={{
-                    minWidth: 44,
-                    alignItems: "center",
-                    backgroundColor: theme.colors.primary,
-                    borderRadius: theme.radius.chip,
-                    paddingHorizontal: theme.space.md,
-                    paddingVertical: theme.space.xs,
-                  }}
-                >
-                  <T variant="heading" color={theme.colors.onPrimary} style={{ marginTop: 0, paddingBottom: 0, borderBottomWidth: 0 }}>
-                    {`×${bottle.quantity}`}
-                  </T>
-                </View>
-              )}
-            </View>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <T variant="strong" color={phaseColor(theme, phase)}>{PHASE_LABELS[phase][locale]}</T>
-              <T variant="data" color={theme.colors.textMuted}>{rec.drinkFrom}–{rec.drinkTo}</T>
-            </View>
-            {bottle.price !== null && (
-              <T variant="muted">
-                {t("priceEach", {
-                  price:
-                    bottle.priceMax != null && bottle.priceMax !== bottle.price
-                      ? `${formatPrice(bottle.price, bottle.currency, locale)}–${formatPrice(bottle.priceMax, bottle.currency, locale)}`
-                      : formatPrice(bottle.price, bottle.currency, locale),
-                })}
-              </T>
-            )}
-            {offer && (
-              <T variant="muted">
-                {offer.probability >= 1
-                  ? t("systembolagetPrice", { price: formatPrice(offer.price, "SEK", locale) })
-                  : t("systembolagetIndication", { price: formatPrice(offer.price, "SEK", locale), pct: Math.round(offer.probability * 100) }) +
-                    (offer.vintage !== null && offer.vintage !== bottle.vintages.year ? t("systembolagetVintage", { year: offer.vintage }) : "")}
-              </T>
-            )}
-            {bottle.location && <T variant="muted">{bottle.location}</T>}
-          </Card>
-        );
-      })}
+      {/* Rubriker bryter listan; korten mellan rubrikerna läggs i kolumner (Grid). */}
+      {rows.reduce<{ key: string; heading?: ReactNode; cards: ReactNode[] }[]>((groups, row) => {
+        if (row.kind === "heading" || row.kind === "subheading") {
+          groups.push({
+            key: row.key,
+            heading: row.kind === "heading"
+              ? <T variant="heading">{`${row.title} · ${row.count}`}</T>
+              : <T variant="label">{`${row.title} · ${row.count}`}</T>,
+            cards: [],
+          });
+          return groups;
+        }
+        if (!groups.length) groups.push({ key: "top", cards: [] });
+        groups[groups.length - 1]!.cards.push(renderCard(row.item, row.key));
+        return groups;
+      }, []).map((g) => (
+        <Fragment key={g.key}>
+          {g.heading}
+          {g.cards.length > 0 && <Grid>{g.cards}</Grid>}
+        </Fragment>
+      ))}
+
       <T variant="muted">{t("all", { n: total })}</T>
     </Screen>
   );
