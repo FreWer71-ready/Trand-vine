@@ -1,24 +1,22 @@
-// Trands logotyp (https://trand.se/brand/index.html), som PNG i tre gångers
-// storlek. Dark-varianten är till mörkt tema, light-varianten till ljust.
-// Monogrammet är en mörk ikonruta i mörkt tema och bara märket i ljust.
+// TrandWines logotyp, från Trands appikoner (https://trand.se/brand/appikoner/), som PNG i tre gångers
+// storlek. Lockupen har namnet inbyggt: dark-varianten (ljus text) till mörkt tema, light-varianten
+// (mörk text) till ljust. Märket är appikonen och ser likadan ut i båda temana.
 
 import { Image, View } from "react-native";
 import { useTheme } from "../lib/theme.tsx";
 
+const MARK = { src: require("../../assets/brand/trandwine-mark.png"), ratio: 1 };
 const SOURCES = {
-  mark: {
-    dark: { src: require("../../assets/brand/trand-mark-dark.png"), ratio: 1 },
-    light: { src: require("../../assets/brand/trand-mark-light.png"), ratio: 64 / 50 },
-  },
+  mark: { dark: MARK, light: MARK },
   lockup: {
-    dark: { src: require("../../assets/brand/trand-lockup-dark.png"), ratio: 419 / 90 },
-    light: { src: require("../../assets/brand/trand-lockup-light.png"), ratio: 419 / 90 },
+    dark: { src: require("../../assets/brand/trandwine-lockup-dark.png"), ratio: 381 / 90 },
+    light: { src: require("../../assets/brand/trandwine-lockup-light.png"), ratio: 381 / 90 },
   },
 } as const;
 
 /**
- * mark = monogrammet, lockup = monogram och ordmärke. height i px. tone väljer
- * variant oberoende av tema, t.ex. "dark" (mörk ikonruta) på ett färgat sidhuvud.
+ * mark = appikonen, lockup = märke och namn. height i px. tone väljer
+ * variant oberoende av tema, t.ex. "dark" (ljus text) på ett färgat sidhuvud.
  */
 export function TrandLogo({
   variant = "lockup",
@@ -32,7 +30,7 @@ export function TrandLogo({
   const { mode } = useTheme();
   const { src, ratio } = SOURCES[variant][tone ?? mode];
   return (
-    <View accessible accessibilityRole="image" accessibilityLabel="Trand">
+    <View accessible accessibilityRole="image" accessibilityLabel="TrandWine">
       <Image source={src} resizeMode="contain" style={{ height, width: height * ratio }} />
     </View>
   );
