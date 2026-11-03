@@ -23,13 +23,16 @@ export default function TabsLayout() {
           letterSpacing: theme.label.letterSpacing,
           textTransform: theme.label.uppercase ? "uppercase" : "none",
         },
-        headerStyle: { backgroundColor: c.header },
-        headerTitleStyle: { fontFamily: theme.fonts.heading.native, color: c.onHeader },
-        headerRight: () => (
-          <View style={{ marginRight: theme.space.lg }}>
-            <TrandLogo variant="mark" height={26} tone="dark" />
+        // Loggan med namnet till vänster, följd av flikens namn så att man ser var man är.
+        // Sidhuvudet ligger på surface-raised; loggan följer temats ljusa eller mörka läge.
+        headerStyle: { backgroundColor: c.surfaceRaised },
+        headerLeft: () => (
+          <View style={{ marginLeft: theme.space.lg, marginRight: theme.space.md }}>
+            <TrandLogo variant="lockup" height={24} />
           </View>
         ),
+        headerTitleAlign: "left",
+        headerTitleStyle: { fontFamily: theme.fonts.heading.native, fontSize: theme.type.body, color: c.text },
         headerShadowVisible: false,
         sceneStyle: { backgroundColor: c.background },
       }}

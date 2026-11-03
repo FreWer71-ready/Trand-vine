@@ -107,13 +107,13 @@ export default function Cellar() {
             style={{
               minWidth: 44,
               alignItems: "center",
-              backgroundColor: theme.colors.primary,
+              backgroundColor: theme.colors.tag,
               borderRadius: theme.radius.chip,
               paddingHorizontal: theme.space.md,
               paddingVertical: theme.space.xs,
             }}
           >
-            <T variant="heading" color={theme.colors.onPrimary} style={{ marginTop: 0, paddingBottom: 0, borderBottomWidth: 0 }}>
+            <T variant="data" color={theme.colors.onTag} style={{ fontSize: theme.type.heading, lineHeight: theme.type.heading * 1.3 }}>
               {`×${bottle.quantity}`}
             </T>
           </View>

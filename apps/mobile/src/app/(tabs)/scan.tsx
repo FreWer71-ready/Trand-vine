@@ -16,6 +16,7 @@ export default function Scan() {
   const t = useT();
   const focused = useIsFocused();
   const theme = useTheme();
+  const c = theme.colors;
   const [permission, requestPermission] = useCameraPermissions();
   // Webb: har användaren sagt ja förut startar vi kameran direkt (se cameraConsent).
   const [webAllowed, setWebAllowed] = useState(cameraRemembered);
@@ -139,7 +140,7 @@ export default function Scan() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000" }}>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       {focused && (
         <CameraView
           ref={camera}
@@ -165,17 +166,29 @@ export default function Scan() {
           accessibilityState={{ checked: torch }}
           accessibilityLabel={t("torch")}
           onPress={() => setTorch((on) => !on)}
-          style={[styles.torch, torch && styles.torchOn]}
+          style={[
+            styles.torch,
+            {
+              borderRadius: theme.radius.chip,
+              backgroundColor: torch ? c.primary : c.surfaceRaised,
+              borderColor: torch ? c.primaryEdge : c.border,
+            },
+          ]}
         >
-          <Text style={[styles.torchText, torch && { color: "#000" }]}>{torch ? t("torchOff") : t("torchOn")}</Text>
+          <Text style={{ color: torch ? c.onPrimary : c.text, fontFamily: theme.fonts.label.native, fontSize: theme.type.small }}>
+            {torch ? t("torchOff") : t("torchOn")}
+          </Text>
         </Pressable>
       )}
       <View style={[styles.overlay, labelMode && styles.overlayLabel]}>
-        <View style={labelMode ? styles.labelFrame : styles.frame} />
-        <Text style={[styles.hint, { fontFamily: theme.fonts.heading.native }]}>
-          {reading ? t("readingLabel") : busy ? t("lookingUp") : labelMode ? t("pointAtLabel") : t("pointAtBarcode")}
-        </Text>
-        {(busy || reading) && <ActivityIndicator color="#fff" />}
+        {/* Ramen och laddsymbolen ligger på kamerabilden: on-primary är ljus i båda lägena. */}
+        <View style={[labelMode ? styles.labelFrame : styles.frame, { borderColor: c.onPrimary, borderRadius: theme.radius.card }]} />
+        <View style={[styles.hint, { backgroundColor: c.surfaceRaised, borderRadius: theme.radius.chip }]}>
+          <Text style={{ color: c.text, fontFamily: theme.fonts.heading.native, fontSize: theme.type.body }}>
+            {reading ? t("readingLabel") : busy ? t("lookingUp") : labelMode ? t("pointAtLabel") : t("pointAtBarcode")}
+          </Text>
+        </View>
+        {(busy || reading) && <ActivityIndicator color={c.onPrimary} />}
       </View>
       <View style={[styles.bottom, { backgroundColor: theme.colors.background }]}>
         {labelMode ? (
@@ -223,17 +236,12 @@ function webTorchSupported(): boolean {
 }
 
 const styles = StyleSheet.create({
-  torch: {
-    position: "absolute", top: 12, right: 12, zIndex: 2, paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: 20, backgroundColor: "rgba(0,0,0,0.55)", borderWidth: 1, borderColor: "#fff",
-  },
-  torchOn: { backgroundColor: "#ffd54a", borderColor: "#ffd54a" },
-  torchText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  torch: { position: "absolute", top: 12, right: 12, zIndex: 2, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1 },
   overlay: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
-  frame: { width: "80%", height: 140, borderWidth: 3, borderColor: "#fff", borderRadius: 16 },
+  frame: { width: "80%", height: 140, borderWidth: 3 },
   // Etikett: ramen fyller kamerabilden så att hela etiketten kommer med.
   overlayLabel: { paddingHorizontal: 16, paddingVertical: 16 },
-  labelFrame: { width: "100%", flex: 1, borderWidth: 3, borderColor: "#fff", borderRadius: 16 },
-  hint: { color: "#fff", fontSize: 17, textShadowColor: "#000", textShadowRadius: 4 },
+  labelFrame: { width: "100%", flex: 1, borderWidth: 3 },
+  hint: { paddingHorizontal: 16, paddingVertical: 8 },
   bottom: { padding: 16, gap: 8 },
 });

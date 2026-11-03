@@ -4,7 +4,8 @@
 //   party – "nöjesappar". Utgår från Partyplan (Fredrik55): natthimmel,
 //           cerise, turkos och solgul, rundade former, knappar med 3D-tryck.
 //   tour  – utgår från Mallorca Golf Tour: vintageaffisch med pergament,
-//           vinröd och guld, serifer och skrivmaskinsetiketter.
+//           vinröd och guld, serifer och skrivmaskinsetiketter. Värdena följer
+//           FreWer71 Designsystem (project/tokens.json).
 //   trand – Trands appstil, som TrandStyle (public/stil.css i trandstyle):
 //           kräm, brons och guld, brunt sidhuvud, Inter. Ljust och mörkt läge.
 //
@@ -37,11 +38,6 @@ export interface ColorTokens {
   accent: string;
   /** Aktiv flik och länkar i navigeringen. */
   navActive: string;
-  /** Sidtitlar (display-typsnittet). */
-  title: string;
-  /** Sidhuvud (överst på skärmen) och text/ikoner på det. */
-  header: string;
-  onHeader: string;
   success: string;
   warning: string;
   danger: string;
@@ -147,9 +143,6 @@ export const party: Theme = {
     secondaryEdge: partyPalette.turkosKant,
     accent: partyPalette.solgul,
     navActive: partyPalette.solgul,
-    title: partyPalette.solgul,
-    header: partyPalette.natt2,
-    onHeader: "#ffffff",
     success: partyPalette.ok,
     warning: partyPalette.orange,
     danger: partyPalette.faraLjus,
@@ -184,7 +177,7 @@ const tourFonts: FontTokens = {
 const tourBase = {
   family: "tour" as const,
   fonts: tourFonts,
-  type: { display: 34, title: 28, heading: 20, body: 17, small: 15, label: 13 },
+  type: { display: 32, title: 26, heading: 18, body: 16, small: 14, label: 12 },
   space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 },
   radius: { card: 12, button: 8, field: 8, chip: 999 },
   button: { style: "flat" as const, uppercase: true, letterSpacing: 1.2, font: "label" as const, edgeHeight: 0 },
@@ -197,27 +190,24 @@ export const tourLight: Theme = {
   name: "Tour (Mallorca), ljus",
   colors: {
     background: "#fcf7ed", // paper
-    surface: "#f3e6c6",
-    surfaceRaised: "#ead9aa", // parchment
-    highlight: "#f1d9b8",
-    border: "rgba(44,31,20,0.5)",
-    text: "#111c2e", // ink
-    textMuted: "#3a362b", // ink-soft
-    primary: "#6e1d2b", // maroon
-    onPrimary: "#fffaf0",
-    primaryEdge: "#52141e",
+    surface: "#f6ecd4",
+    surfaceRaised: "#efdfb8", // parchment
+    highlight: "#f1dcc0",
+    border: "rgba(44,31,20,0.32)",
+    text: "#1b2a41", // ink
+    textMuted: "#454034", // ink-soft
+    primary: "#7a2331", // maroon
+    onPrimary: "#fbf4e3",
+    primaryEdge: "#5e1a24",
     secondary: "transparent",
-    onSecondary: "#111c2e",
-    secondaryEdge: "#7a5822", // gold
-    accent: "#7a5822",
-    navActive: "#6e1d2b",
-    title: "#6e1d2b",
-    header: "#ead9aa",
-    onHeader: "#111c2e",
-    success: "#2f4a2a", // fairway
-    warning: "#7d4c08",
-    danger: "#8a1c2c",
-    tag: "#ead9aa",
+    onSecondary: "#1b2a41",
+    secondaryEdge: "#8f6a32", // gold
+    accent: "#8f6a32",
+    navActive: "#7a2331",
+    success: "#3b4a33", // fairway
+    warning: "#8f5a12",
+    danger: "#7a2331",
+    tag: "#efdfb8",
     onTag: "#2c1f14",
   },
   backgroundCss: "#fcf7ed",
@@ -229,28 +219,25 @@ export const tourDark: Theme = {
   name: "Tour (Mallorca), mörk",
   colors: {
     background: "#100c07",
-    surface: "#201810",
-    surfaceRaised: "#30251a",
-    highlight: "#40242a",
-    border: "rgba(230,214,170,0.4)",
-    text: "#fbf3dc",
-    textMuted: "#d9cdb0",
+    surface: "#1d160d",
+    surfaceRaised: "#2b2115",
+    highlight: "#3a1f22",
+    border: "rgba(230,214,170,0.24)",
+    text: "#f1e6c8",
+    textMuted: "#c9bc9c",
     primary: "#b83d50", // Mallorcas #c24558, något mörkare för läsbar knapptext (WCAG AA)
     onPrimary: "#fbf4e3",
     primaryEdge: "#e0687a",
     secondary: "transparent",
-    onSecondary: "#fbf3dc",
+    onSecondary: "#f1e6c8",
     secondaryEdge: "#c9a15c",
     accent: "#e0bd7c",
     navActive: "#e0bd7c",
-    title: "#e0bd7c",
-    header: "#30251a",
-    onHeader: "#fbf3dc",
     success: "#8fa379",
     warning: "#e0bd7c",
     danger: "#e0687a",
-    tag: "#30251a",
-    onTag: "#fbf3dc",
+    tag: "#2b2115",
+    onTag: "#f1e6c8",
   },
   backgroundCss: "#100c07",
 };
@@ -259,7 +246,6 @@ export const tourDark: Theme = {
 
 // Färger från TrandStyle (public/stil.css). Grönt, orange och dämpad text i
 // ljust läge är något mörkare än i Style, för att klara WCAG AA mot bakgrunden.
-const trandHeader = { header: "#8a5a2b", onHeader: "#fff8e8" }; // brons, som Styles sidhuvud
 
 const inter = (weight: number, native: string): FontToken =>
   font('"Inter", system-ui, -apple-system, "Segoe UI", sans-serif', native, `Inter:wght@${weight}`);
@@ -302,8 +288,6 @@ export const trandLight: Theme = {
     secondaryEdge: "#e3d4b8",
     accent: "#8a5a2b",
     navActive: "#8a5a2b",
-    title: "#2a1f14",
-    ...trandHeader,
     success: "#2b764b",
     warning: "#a94e08",
     danger: "#b42318",
@@ -333,8 +317,6 @@ export const trandDark: Theme = {
     secondaryEdge: "#3a2f24",
     accent: "#d9a441",
     navActive: "#d9a441",
-    title: "#f1e8d8",
-    ...trandHeader,
     success: "#6fcf97",
     warning: "#f0b35a",
     danger: "#ff8a80",
