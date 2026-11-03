@@ -48,7 +48,7 @@ function Screens() {
         screenOptions={{
           headerStyle: { backgroundColor: theme.colors.surfaceRaised },
           headerTintColor: theme.colors.navActive,
-          headerTitleStyle: { fontFamily: theme.fonts.heading.native, color: theme.colors.text },
+          headerTitleStyle: { fontFamily: theme.fonts.heading.native, color: theme.colors.onSurfaceRaised },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: theme.colors.background },
         }}

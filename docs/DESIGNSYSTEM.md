@@ -8,9 +8,9 @@ att byta tema – komponenterna ändras inte.
 |---|---|---|---|
 | `party` | Nöjesappar (fester, spel, tävlingar) | Partyplan / [Fredrik55](https://github.com/FreWer71-ready/Fredrik55) | Natthimmel, cerise, turkos, solgul. Fredoka + Nunito. Rundat, knappar med 3D-tryck. Alltid mörkt. |
 | `tour` | Resor, samlingar, klassiska appar | [Mallorca Golf Tour](https://github.com/FreWer71-ready/golftour) | Vintageaffisch: pergament, vinröd, guld. Abril Fatface, Fraunces, Lora, Special Elite, IBM Plex Mono. Ljust och mörkt läge. |
-| `trand` | Trands appar (TrandWine, TrandStyle) | [TrandStyle](https://github.com/FreWer71-ready/trandstyle) (`public/stil.css`) | Kräm, brons och guld, ljusa kort med tunn kant. Inter. Etiketter i versaler med spärrning. Ljust och mörkt läge. |
+| `trand` | Trands appar (TrandWine, TrandStyle) | [TrandStyle](https://github.com/FreWer71-ready/trandstyle) (`public/stil.css`) | Kräm, brons och guld, brunt sidhuvud och flikrad, ljusa kort med tunn kant. Inter. Etiketter i versaler med spärrning. Ljust och mörkt läge. |
 
-**TrandWine använder `tour`.** `EXPO_PUBLIC_APP_THEME=party` eller `trand` ger de andra utseendena. Tour-värdena följer FreWer71 Designsystem (`project/tokens.json`).
+**TrandWine använder `trand`**, så att den ser ut som TrandStyle. `EXPO_PUBLIC_APP_THEME=tour` eller `party` ger de andra utseendena. Värdena följer FreWer71 Designsystem (`project/tokens.json`).
 
 ![Tour ljust, Tour mörkt och Party](screenshots/themes.png)
 
@@ -18,7 +18,7 @@ att byta tema – komponenterna ändras inte.
 
 Alla teman definierar samma nycklar (`packages/design/src/tokens.ts`):
 
-- **Färg:** `background`, `surface`, `surfaceRaised`, `highlight`, `border`,
+- **Färg:** `background`, `surface`, `surfaceRaised`/`onSurfaceRaised`/`onSurfaceRaisedMuted`, `highlight`, `border`,
   `text`, `textMuted`, `primary`/`onPrimary`/`primaryEdge`,
   `secondary`/`onSecondary`/`secondaryEdge`, `accent`, `navActive`,
   `success`, `warning`, `danger`, `tag`/`onTag`
@@ -49,7 +49,7 @@ Se `apps/mobile/src/lib/theme.tsx` och `apps/mobile/src/components/ui.tsx`:
 
 ```tsx
 import { getTheme } from "@trand-vine/design";
-const theme = getTheme("tour", colorScheme === "dark" ? "dark" : "light");
+const theme = getTheme("trand", colorScheme === "dark" ? "dark" : "light");
 <Text style={{ color: theme.colors.text, fontFamily: theme.fonts.body.native }} />
 ```
 

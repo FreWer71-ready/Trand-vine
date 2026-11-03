@@ -14,6 +14,14 @@ const contrast = (a: string, b: string) => {
   const [l1, l2] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
   return (l1 + 0.05) / (l2 + 0.05);
 };
+// Färg med alfa (rgba) blandad mot en bakgrund, som hex.
+function solid(color: string, bg: string): string {
+  const m = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+  if (!m) return color;
+  const a = Number(m[4]);
+  const mix = (i: number) => Math.round(Number(m[i]) * a + parseInt(bg.slice(2 * i - 1, 2 * i + 1), 16) * (1 - a));
+  return "#" + [1, 2, 3].map((i) => mix(i).toString(16).padStart(2, "0")).join("");
+}
 const all: Theme[] = [party, tourLight, tourDark, trandLight, trandDark];
 
 describe("tokens", () => {
@@ -27,6 +35,13 @@ describe("tokens", () => {
     expect(contrast(t.colors.onPrimary, t.colors.primary)).toBeGreaterThanOrEqual(4.5);
     for (const c of [t.colors.success, t.colors.warning, t.colors.danger]) {
       expect(contrast(c, t.colors.background)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it.each(all.map((t) => [t.name, t] as const))("%s has readable header and tab bar (WCAG AA)", (_, t) => {
+    const raised = t.colors.surfaceRaised;
+    for (const c of [t.colors.onSurfaceRaised, t.colors.onSurfaceRaisedMuted, t.colors.navActive]) {
+      expect(contrast(solid(c, raised), raised)).toBeGreaterThanOrEqual(4.5);
     }
   });
 

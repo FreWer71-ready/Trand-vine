@@ -10,13 +10,15 @@ import { cameraRemembered, rememberCamera } from "../../lib/cameraConsent.ts";
 import { shrinkForUpload } from "../../lib/shrinkImage.ts";
 import { useT } from "../../lib/i18n.tsx";
 import { openManualAdd, setPendingLabel, setPendingScan } from "../../lib/scanStore.ts";
-import { useTheme } from "../../lib/theme.tsx";
+import { isLightColor, useTheme } from "../../lib/theme.tsx";
 
 export default function Scan() {
   const t = useT();
   const focused = useIsFocused();
   const theme = useTheme();
   const c = theme.colors;
+  // Ramen och laddsymbolen ligger på kamerabilden och behöver en ljus färg i alla teman.
+  const onCamera = isLightColor(c.onPrimary) ? c.onPrimary : c.onSurfaceRaised;
   const [permission, requestPermission] = useCameraPermissions();
   // Webb: har användaren sagt ja förut startar vi kameran direkt (se cameraConsent).
   const [webAllowed, setWebAllowed] = useState(cameraRemembered);
@@ -175,20 +177,19 @@ export default function Scan() {
             },
           ]}
         >
-          <Text style={{ color: torch ? c.onPrimary : c.text, fontFamily: theme.fonts.label.native, fontSize: theme.type.small }}>
+          <Text style={{ color: torch ? c.onPrimary : c.onSurfaceRaised, fontFamily: theme.fonts.label.native, fontSize: theme.type.small }}>
             {torch ? t("torchOff") : t("torchOn")}
           </Text>
         </Pressable>
       )}
       <View style={[styles.overlay, labelMode && styles.overlayLabel]}>
-        {/* Ramen och laddsymbolen ligger på kamerabilden: on-primary är ljus i båda lägena. */}
-        <View style={[labelMode ? styles.labelFrame : styles.frame, { borderColor: c.onPrimary, borderRadius: theme.radius.card }]} />
+        <View style={[labelMode ? styles.labelFrame : styles.frame, { borderColor: onCamera, borderRadius: theme.radius.card }]} />
         <View style={[styles.hint, { backgroundColor: c.surfaceRaised, borderRadius: theme.radius.chip }]}>
-          <Text style={{ color: c.text, fontFamily: theme.fonts.heading.native, fontSize: theme.type.body }}>
+          <Text style={{ color: c.onSurfaceRaised, fontFamily: theme.fonts.heading.native, fontSize: theme.type.body }}>
             {reading ? t("readingLabel") : busy ? t("lookingUp") : labelMode ? t("pointAtLabel") : t("pointAtBarcode")}
           </Text>
         </View>
-        {(busy || reading) && <ActivityIndicator color={c.onPrimary} />}
+        {(busy || reading) && <ActivityIndicator color={onCamera} />}
       </View>
       <View style={[styles.bottom, { backgroundColor: theme.colors.background }]}>
         {labelMode ? (
