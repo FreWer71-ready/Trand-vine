@@ -7,7 +7,7 @@
 //           vinröd och guld, serifer och skrivmaskinsetiketter. Värdena följer
 //           FreWer71 Designsystem (project/tokens.json).
 //   trand – Trands appstil, som TrandStyle (public/stil.css i trandstyle):
-//           kräm, brons och guld, brunt sidhuvud, Inter. Ljust och mörkt läge.
+//           kräm, brons och guld, brunt sidhuvud och flikrad, Inter. Ljust och mörkt läge.
 //
 // Komponenter ska bara läsa semantiska tokens (surface, primary, …), aldrig
 // palettens råa färger, så att de fungerar i båda familjerna.
@@ -22,6 +22,10 @@ export interface ColorTokens {
   surface: string;
   /** Upphöjd yta: dialoger, flikrad, sidhuvud. */
   surfaceRaised: string;
+  /** Text och ikoner på surface-raised (sidhuvud, flikrad). */
+  onSurfaceRaised: string;
+  /** Inaktiva flikar och sekundär text på surface-raised. */
+  onSurfaceRaisedMuted: string;
   /** Markerat kort (t.ex. "Du har haft detta vin förut"). */
   highlight: string;
   border: string;
@@ -131,6 +135,8 @@ export const party: Theme = {
     background: partyPalette.natt,
     surface: "rgba(255,255,255,0.10)",
     surfaceRaised: partyPalette.natt2,
+    onSurfaceRaised: "#ffffff",
+    onSurfaceRaisedMuted: "rgba(255,255,255,0.68)",
     highlight: "rgba(255,210,63,0.16)",
     border: "rgba(255,255,255,0.18)",
     text: "#ffffff",
@@ -192,6 +198,8 @@ export const tourLight: Theme = {
     background: "#fcf7ed", // paper
     surface: "#f6ecd4",
     surfaceRaised: "#efdfb8", // parchment
+    onSurfaceRaised: "#1b2a41",
+    onSurfaceRaisedMuted: "#454034",
     highlight: "#f1dcc0",
     border: "rgba(44,31,20,0.32)",
     text: "#1b2a41", // ink
@@ -221,6 +229,8 @@ export const tourDark: Theme = {
     background: "#100c07",
     surface: "#1d160d",
     surfaceRaised: "#2b2115",
+    onSurfaceRaised: "#f1e6c8",
+    onSurfaceRaisedMuted: "#c9bc9c",
     highlight: "#3a1f22",
     border: "rgba(230,214,170,0.24)",
     text: "#f1e6c8",
@@ -275,7 +285,9 @@ export const trandLight: Theme = {
   colors: {
     background: "#f3ead9",
     surface: "#fffaf0", // yta
-    surfaceRaised: "#fffaf0",
+    surfaceRaised: "#8a5a2b", // brons, som Styles sidhuvud
+    onSurfaceRaised: "#fff8e8",
+    onSurfaceRaisedMuted: "#f0e2c8", // Styles 75 % krämvitt, något ljusare för WCAG AA
     highlight: "#ecdbb6", // fokus (guld 35 %) på yta
     border: "#e3d4b8", // linje
     text: "#2a1f14",
@@ -287,7 +299,7 @@ export const trandLight: Theme = {
     onSecondary: "#2a1f14",
     secondaryEdge: "#e3d4b8",
     accent: "#8a5a2b",
-    navActive: "#8a5a2b",
+    navActive: "#ffe8a3", // aktiv flik och tillbakapil på brons
     success: "#2b764b",
     warning: "#a94e08",
     danger: "#b42318",
@@ -304,7 +316,9 @@ export const trandDark: Theme = {
   colors: {
     background: "#1a1511",
     surface: "#241d17",
-    surfaceRaised: "#241d17",
+    surfaceRaised: "#8a5a2b", // brons, som Styles sidhuvud
+    onSurfaceRaised: "#fff8e8",
+    onSurfaceRaisedMuted: "#f0e2c8",
     highlight: "#5a4624", // fokus (guld 30 %) på yta
     border: "#3a2f24",
     text: "#f1e8d8",
@@ -316,7 +330,7 @@ export const trandDark: Theme = {
     onSecondary: "#f1e8d8",
     secondaryEdge: "#3a2f24",
     accent: "#d9a441",
-    navActive: "#d9a441",
+    navActive: "#ffe8a3", // aktiv flik och tillbakapil på brons
     success: "#6fcf97",
     warning: "#f0b35a",
     danger: "#ff8a80",

@@ -1,6 +1,6 @@
 // Appens tema från FreWer71 Designsystem (packages/design): TrandWine använder
-// familjen Tour. EXPO_PUBLIC_APP_THEME=party eller trand ger de andra
-// utseendena, t.ex. för att förhandsgranska.
+// familjen Trand, som ser ut som TrandStyle. EXPO_PUBLIC_APP_THEME=tour eller
+// party ger de andra utseendena, t.ex. för att förhandsgranska.
 
 import { AbrilFatface_400Regular } from "@expo-google-fonts/abril-fatface";
 import { Fraunces_600SemiBold } from "@expo-google-fonts/fraunces";
@@ -16,7 +16,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { useColorScheme } from "react-native";
 
 const THEME_ENV = process.env.EXPO_PUBLIC_APP_THEME;
-export const APP_THEME: ThemeFamily = THEME_ENV === "party" || THEME_ENV === "trand" ? THEME_ENV : "tour";
+export const APP_THEME: ThemeFamily = THEME_ENV === "party" || THEME_ENV === "tour" ? THEME_ENV : "trand";
 
 const FONT_ASSETS: Record<string, number> = {
   AbrilFatface_400Regular,
@@ -58,4 +58,13 @@ export function ThemeProvider({ children, family = APP_THEME }: { children: Reac
 
 export function useTheme(): Theme {
   return useContext(ThemeContext);
+}
+
+/** Är färgen ljus? För att välja logga (ljus eller mörk text) efter en tokens färg. */
+export function isLightColor(color: string): boolean {
+  const rgba = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  const [r, g, b] = rgba
+    ? [rgba[1], rgba[2], rgba[3]].map(Number)
+    : [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+  return 0.299 * r! + 0.587 * g! + 0.114 * b! > 150;
 }

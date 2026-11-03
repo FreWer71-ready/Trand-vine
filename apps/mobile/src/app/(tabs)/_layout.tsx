@@ -2,7 +2,7 @@ import { Tabs } from "expo-router/tabs";
 import { Text, View, type ColorValue } from "react-native";
 import { TrandLogo } from "../../components/TrandLogo.tsx";
 import { useT } from "../../lib/i18n.tsx";
-import { useTheme } from "../../lib/theme.tsx";
+import { isLightColor, useTheme } from "../../lib/theme.tsx";
 
 const icon = (glyph: string) => ({ color }: { color: ColorValue }) => (
   <Text style={{ fontSize: 20, color }}>{glyph}</Text>
@@ -16,7 +16,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: c.navActive,
-        tabBarInactiveTintColor: c.textMuted,
+        tabBarInactiveTintColor: c.onSurfaceRaisedMuted,
         tabBarStyle: { backgroundColor: c.surfaceRaised, borderTopColor: c.border },
         tabBarLabelStyle: {
           fontFamily: theme.fonts.label.native,
@@ -24,15 +24,15 @@ export default function TabsLayout() {
           textTransform: theme.label.uppercase ? "uppercase" : "none",
         },
         // Loggan med namnet till vänster, följd av flikens namn så att man ser var man är.
-        // Sidhuvudet ligger på surface-raised; loggan följer temats ljusa eller mörka läge.
+        // Sidhuvudet ligger på surface-raised; loggan har ljus text där texten på det är ljus.
         headerStyle: { backgroundColor: c.surfaceRaised },
         headerLeft: () => (
           <View style={{ marginLeft: theme.space.lg, marginRight: theme.space.md }}>
-            <TrandLogo variant="lockup" height={24} />
+            <TrandLogo variant="lockup" height={24} tone={isLightColor(c.onSurfaceRaised) ? "dark" : "light"} />
           </View>
         ),
         headerTitleAlign: "left",
-        headerTitleStyle: { fontFamily: theme.fonts.heading.native, fontSize: theme.type.body, color: c.text },
+        headerTitleStyle: { fontFamily: theme.fonts.heading.native, fontSize: theme.type.body, color: c.onSurfaceRaised },
         headerShadowVisible: false,
         sceneStyle: { backgroundColor: c.background },
       }}
