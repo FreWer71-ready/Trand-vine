@@ -1,6 +1,6 @@
-// Appens tema från designsystemet (packages/design): "trand" (Trands egen stil,
-// som trand.se och TrandStyle) är TrandWines utseende. EXPO_PUBLIC_APP_THEME=tour
-// eller party ger de andra utseendena, t.ex. för att förhandsgranska.
+// Appens tema från FreWer71 Designsystem (packages/design): TrandWine använder
+// familjen Tour. EXPO_PUBLIC_APP_THEME=party eller trand ger de andra
+// utseendena, t.ex. för att förhandsgranska.
 
 import { AbrilFatface_400Regular } from "@expo-google-fonts/abril-fatface";
 import { Fraunces_600SemiBold } from "@expo-google-fonts/fraunces";
@@ -16,7 +16,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { useColorScheme } from "react-native";
 
 const THEME_ENV = process.env.EXPO_PUBLIC_APP_THEME;
-export const APP_THEME: ThemeFamily = THEME_ENV === "party" || THEME_ENV === "tour" ? THEME_ENV : "trand";
+export const APP_THEME: ThemeFamily = THEME_ENV === "party" || THEME_ENV === "trand" ? THEME_ENV : "tour";
 
 const FONT_ASSETS: Record<string, number> = {
   AbrilFatface_400Regular,

@@ -90,20 +90,21 @@ export function T({
   const { fonts, type, colors } = theme;
   const styles: Record<Variant, TextStyle> = {
     display: { fontFamily: fonts.display.native, fontSize: type.display, lineHeight: type.display * 1.15 },
-    title: { fontFamily: fonts.display.native, fontSize: type.title, lineHeight: type.title * 1.25, color: colors.title },
-    heading: { fontFamily: fonts.heading.native, fontSize: type.heading, lineHeight: type.heading * 1.25, marginTop: theme.space.lg, paddingBottom: theme.space.xs, borderBottomWidth: 1, borderBottomColor: colors.accent },
-    cardTitle: { fontFamily: fonts.heading.native, fontSize: type.heading, lineHeight: type.heading * 1.25 },
-    body: { fontFamily: fonts.body.native, fontSize: type.body, lineHeight: type.body * 1.5 },
-    strong: { fontFamily: fonts.bodyStrong.native, fontSize: type.body, lineHeight: type.body * 1.5 },
-    muted: { fontFamily: fonts.body.native, fontSize: type.small, lineHeight: type.small * 1.45, color: colors.textMuted },
+    title: { fontFamily: fonts.display.native, fontSize: type.title, lineHeight: type.title * 1.2 },
+    heading: { fontFamily: fonts.heading.native, fontSize: type.heading, lineHeight: type.heading * 1.3, marginTop: theme.space.lg, paddingBottom: theme.space.xs, borderBottomWidth: 1, borderBottomColor: colors.border },
+    cardTitle: { fontFamily: fonts.heading.native, fontSize: type.body + 1, lineHeight: (type.body + 1) * 1.3 },
+    body: { fontFamily: fonts.body.native, fontSize: type.body, lineHeight: type.body * 1.4 },
+    strong: { fontFamily: fonts.bodyStrong.native, fontSize: type.body, lineHeight: type.body * 1.4 },
+    muted: { fontFamily: fonts.body.native, fontSize: type.small, lineHeight: type.small * 1.4, color: colors.textMuted },
     label: {
       fontFamily: fonts.label.native,
       fontSize: type.label,
-      color: colors.accent,
+      lineHeight: type.label * 1.3,
+      color: colors.textMuted,
       letterSpacing: theme.label.letterSpacing,
       textTransform: theme.label.uppercase ? "uppercase" : "none",
     },
-    data: { fontFamily: fonts.data.native, fontSize: type.small, fontVariant: ["tabular-nums"] },
+    data: { fontFamily: fonts.data.native, fontSize: type.small, lineHeight: type.small * 1.4, fontVariant: ["tabular-nums"] },
   };
   return (
     <Text numberOfLines={numberOfLines} style={[{ color: colors.text }, styles[variant], color ? { color } : null, style]}>

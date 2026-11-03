@@ -48,7 +48,7 @@ describe("tokens", () => {
 describe("css", () => {
   it("emits semantic variables", () => {
     const v = themeVariables(themes.tour.light);
-    expect(v["--color-primary"]).toBe("#6e1d2b");
+    expect(v["--color-primary"]).toBe("#7a2331");
     expect(v["--font-display"]).toContain("Abril Fatface");
     expect(v["--radius-card"]).toBe("12px");
   });
