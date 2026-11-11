@@ -23,7 +23,7 @@ export default function History() {
   if (bottles.length === 0) return <Screen><Body>{t("emptyHistory")}</Body></Screen>;
 
   return (
-    <Screen wide scene="oak">
+    <Screen wide>
       <Grid>{bottles.map((b) => (
         <Card key={b.id} onPress={() => router.push(`/bottle/${b.id}`)}>
           <T variant="cardTitle">{wineTitle(b.vintages)}</T>

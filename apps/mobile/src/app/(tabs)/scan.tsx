@@ -133,7 +133,7 @@ export default function Scan() {
         }
       : requestPermission;
     return (
-      <Screen scene="glass">
+      <Screen>
         <Body>{blocked || (web && permission.status === "denied") ? t("cameraBlocked") : t("cameraPermission")}</Body>
         <Button title={t("allowCamera")} onPress={allow} />
         {fallback}

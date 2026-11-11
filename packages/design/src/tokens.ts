@@ -315,12 +315,12 @@ export const trandDark: Theme = {
   name: "Trand, mörk",
   colors: {
     background: "#1a1511",
-    surface: "rgba(30,23,17,0.72)", // halvgenomskinlig: kort ligger som glas på bakgrundsfotot
-    surfaceRaised: "#15100c", // mörkt sidhuvud och flikrad: skärmen är alltid på
+    surface: "#241d17",
+    surfaceRaised: "#8a5a2b", // brons, som Styles sidhuvud
     onSurfaceRaised: "#fff8e8",
     onSurfaceRaisedMuted: "#f0e2c8",
-    highlight: "rgba(90,70,36,0.85)", // fokus (guld 30 %) på yta
-    border: "rgba(255,240,215,0.16)",
+    highlight: "#5a4624", // fokus (guld 30 %) på yta
+    border: "#3a2f24",
     text: "#f1e8d8",
     textMuted: "#b3a48d",
     primary: "#d9a441", // guld
@@ -328,7 +328,7 @@ export const trandDark: Theme = {
     primaryEdge: "#d9a441",
     secondary: "transparent",
     onSecondary: "#f1e8d8",
-    secondaryEdge: "rgba(255,240,215,0.28)",
+    secondaryEdge: "#3a2f24",
     accent: "#d9a441",
     navActive: "#ffe8a3", // aktiv flik och tillbakapil på brons
     success: "#6fcf97",

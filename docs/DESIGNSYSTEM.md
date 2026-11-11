@@ -65,12 +65,3 @@ npm run css -w @trand-vine/design -- tour > theme.css    # eller party, trand
 Filen innehåller `--color-*`, `--font-*`, `--radius-*`, `--space-*` och
 `--text-*` för ljust och mörkt läge, plus en kommentar med Google Fonts-länken.
 I Tailwind v4 kan variablerna användas direkt i `@theme`.
-
-## Fotobakgrund och mörkt standardläge (TrandWine)
-
-- **Mörkt läge är standard** – skärmen är alltid på. `EXPO_PUBLIC_APP_MODE=light` ger ljust läge.
-- `Screen` visar i mörkt läge ett fotolikt bakgrundsfoto (`scene`: `cellar`, `vineyard`, `glass`, `oak`)
-  som panorerar och zoomar mycket sakta (`components/PhotoBackground.tsx`). Stillbild om
-  användaren har stängt av rörelse i systemet.
-- Kort och fält är halvgenomskinliga (`surface`, `border` i `trandDark`) och ligger som glas på fotot.
-- Bilderna skapas av `scripts/make-backgrounds.py` (720×1280, ca 70 kB styck) – inga externa bildkällor.
