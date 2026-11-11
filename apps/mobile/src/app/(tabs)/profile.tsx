@@ -33,7 +33,7 @@ export default function Profile() {
   }
 
   return (
-    <Screen>
+    <Screen scene="vineyard">
       <Field label={t("displayName")} value={name} onChangeText={setName} maxLength={50} />
       <Button
         title={t("save")}

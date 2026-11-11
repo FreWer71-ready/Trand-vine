@@ -13,7 +13,6 @@ import { SpecialElite_400Regular } from "@expo-google-fonts/special-elite";
 import { getTheme, nativeFontNames, type Theme, type ThemeFamily } from "@trand-vine/design";
 import { useFonts } from "expo-font";
 import { createContext, useContext, type ReactNode } from "react";
-import { useColorScheme } from "react-native";
 
 const THEME_ENV = process.env.EXPO_PUBLIC_APP_THEME;
 export const APP_THEME: ThemeFamily = THEME_ENV === "party" || THEME_ENV === "tour" ? THEME_ENV : "trand";
@@ -51,8 +50,8 @@ export function useThemeFonts(family: ThemeFamily = APP_THEME): boolean {
 const ThemeContext = createContext<Theme>(getTheme(APP_THEME, "light"));
 
 export function ThemeProvider({ children, family = APP_THEME }: { children: ReactNode; family?: ThemeFamily }) {
-  const scheme = useColorScheme();
-  const theme = getTheme(family, scheme === "dark" ? "dark" : "light");
+  // Mörkt är standard: skärmen är alltid på. EXPO_PUBLIC_APP_MODE=light ger ljust läge.
+  const theme = getTheme(family, process.env.EXPO_PUBLIC_APP_MODE === "light" ? "light" : "dark");
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
 }
 

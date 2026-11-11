@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { READABLE_MAX, useLayout } from "../lib/layout.ts";
 import { useTheme } from "../lib/theme.tsx";
+import { PhotoBackground, type Scene } from "./PhotoBackground.tsx";
 
 export function phaseColor(theme: Theme, phase: DrinkPhase): string {
   const c = theme.colors;
@@ -27,7 +28,18 @@ export function phaseColor(theme: Theme, phase: DrinkPhase): string {
  * Skärmens innehåll. wide = listor som får använda hela ramens bredd (kort i
  * kolumner); annars hålls innehållet till läsbar bredd på stora skärmar.
  */
-export function Screen({ children, scroll = true, wide = false }: { children: ReactNode; scroll?: boolean; wide?: boolean }) {
+export function Screen({
+  children,
+  scroll = true,
+  wide = false,
+  scene,
+}: {
+  children: ReactNode;
+  scroll?: boolean;
+  wide?: boolean;
+  /** Bakgrundsfoto i mörkt läge. */
+  scene?: Scene;
+}) {
   const theme = useTheme();
   const { size } = useLayout();
   const content = {
@@ -39,6 +51,8 @@ export function Screen({ children, scroll = true, wide = false }: { children: Re
   };
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["left", "right", "bottom"]}>
+      {/* Fotona är mörka, så de visas bara i mörkt läge. */}
+      {theme.mode === "dark" && <PhotoBackground scene={scene} />}
       {scroll ? (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={[content, { flexGrow: 1 }]} keyboardShouldPersistTaps="handled">
           {children}

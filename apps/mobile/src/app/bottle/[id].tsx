@@ -112,7 +112,7 @@ export default function BottleScreen() {
     : wineAvg ? { avg: wineAvg.avg_rating, n: wineAvg.rating_count } : null;
 
   return (
-    <Screen>
+    <Screen scene="glass">
       <Stack.Screen options={{ title: bottle.vintages.year ? String(bottle.vintages.year) : "NV" }} />
       <Title>{wineTitle(bottle.vintages)}</Title>
       {inCellar && bottle.quantity > 1 && <T variant="strong">{t("bottlesLeft", { n: bottle.quantity })}</T>}
