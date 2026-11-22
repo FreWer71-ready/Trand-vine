@@ -1,18 +1,25 @@
 -- Betyg med en decimal (t.ex. 3,5 eller 4,2) i stället för hela stjärnor.
 -- Gamla heltalsbetyg behålls som de är (4 blir 4,0).
 
--- Triggern lyssnar på kolumnen och måste tas bort medan typen ändras.
-drop trigger bottles_rating on public.bottles;
+-- Migreringen tar inte bort något: triggern byts ut på plats och de gamla
+-- funktionerna byter namn och spärras.
+
+-- Triggern får tillfälligt lyssna på alla uppdateringar, så att kolumnens typ
+-- kan ändras (en trigger "update of rating" låser typen).
+create or replace trigger bottles_rating
+  after insert or update on public.bottles
+  for each row execute function public.bottle_rating_to_ratings();
 
 alter table public.bottles alter column rating type numeric(2, 1);
 alter table public.ratings alter column score type numeric(2, 1);
 
-create trigger bottles_rating
+create or replace trigger bottles_rating
   after insert or update of rating on public.bottles
   for each row execute function public.bottle_rating_to_ratings();
 
 -- Funktioner med betyget i signaturen byggs om med den nya typen.
-drop function public.my_wine_history(uuid);
+alter function public.my_wine_history(uuid) rename to my_wine_history_v1;
+revoke execute on function public.my_wine_history_v1(uuid) from public, anon, authenticated;
 create function public.my_wine_history(target_wine uuid)
 returns table (
   bottle_id uuid, year smallint, status public.bottle_status, acquisition_type public.acquisition_type,
@@ -32,7 +39,8 @@ $$;
 revoke execute on function public.my_wine_history(uuid) from public, anon;
 grant execute on function public.my_wine_history(uuid) to authenticated;
 
-drop function public.take_bottle(uuid, public.bottle_status, date, text, text, smallint, text);
+alter function public.take_bottle(uuid, public.bottle_status, date, text, text, smallint, text) rename to take_bottle_v1;
+revoke execute on function public.take_bottle_v1(uuid, public.bottle_status, date, text, text, smallint, text) from public, anon, authenticated;
 create function public.take_bottle(
   target uuid,
   new_status public.bottle_status,
