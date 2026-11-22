@@ -11,7 +11,7 @@ import {
 } from "@trand-vine/core";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Body, Button, Card, Chips, ErrorText, Field, Heading, Screen, Stepper, T, Title } from "../components/ui.tsx";
+import { Body, Button, Card, Chips, ErrorText, Field, Heading, Screen, Stepper, T, Title, formatRating } from "../components/ui.tsx";
 import {
   createBottle,
   createWine,
@@ -365,7 +365,7 @@ function BottleDetails({
             <Body key={h.bottle_id} muted>
               {h.year ?? "NV"} · {ACQUISITION_LABELS[h.acquisition_type][locale]}
               {h.gift_from ? ` (${h.gift_from})` : ""}
-              {h.rating ? ` · ${"★".repeat(h.rating)}` : ""}
+              {h.rating ? ` · ★ ${formatRating(h.rating, locale)}` : ""}
               {h.notes ? ` · ${h.notes}` : ""}
             </Body>
           ))}

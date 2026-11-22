@@ -6,7 +6,7 @@ import { View } from "react-native";
 import { Body, Card, Chips, ErrorText, Grid, Loading, Screen, Stars, T } from "../../components/ui.tsx";
 import { listBottles, type BottleRow } from "../../lib/api.ts";
 import { wineTitle } from "../../lib/format.ts";
-import { useLocale, useT } from "../../lib/i18n.tsx";
+import { useT } from "../../lib/i18n.tsx";
 import { useTheme } from "../../lib/theme.tsx";
 import { topList } from "../../lib/topList.ts";
 
@@ -14,7 +14,6 @@ type View_ = "latest" | "top";
 
 export default function History() {
   const t = useT();
-  const locale = useLocale();
   const theme = useTheme();
   const [bottles, setBottles] = useState<BottleRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,10 +61,7 @@ export default function History() {
               <View style={{ flex: 1, gap: 4 }}>
                 <T variant="cardTitle">{wineTitle(e.vintage)}</T>
                 {e.rating !== null ? (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: theme.space.sm, flexWrap: "wrap" }}>
-                    <Stars value={e.rating} />
-                    <T variant="strong">{e.rating.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</T>
-                  </View>
+                  <Stars value={e.rating} />
                 ) : (
                   <T variant="muted">{t("topNoRating")}</T>
                 )}

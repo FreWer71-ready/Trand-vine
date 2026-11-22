@@ -11,7 +11,7 @@ import {
   wineKnowledge,
 } from "@trand-vine/core";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Linking, Text, View } from "react-native";
 import {
   Body,
@@ -21,8 +21,10 @@ import {
   Field,
   Heading,
   Loading,
+  RatingInput,
   Screen,
   Stars,
+  formatRating,
   Tags,
   T,
   Title,
@@ -31,6 +33,7 @@ import {
 import {
   getBottle,
   takeBottle,
+  updateBottle,
   wikidataLookup,
   wineHistory,
   wineRating,
@@ -126,8 +129,8 @@ export default function BottleScreen() {
         <T variant="label">{t("community")}</T>
         {rating?.avg ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Stars value={rating.avg} />
-            <T variant="data">{rating.avg.toFixed(1)}</T>
+            <Stars value={rating.avg} showValue={false} />
+            <T variant="data">{formatRating(rating.avg, locale)}</T>
             <T variant="muted">{t("ratingsCount", { n: rating.n })}</T>
           </View>
         ) : (
@@ -240,7 +243,18 @@ export default function BottleScreen() {
           </T>
           {bottle.consumed_with && <Body>{t("consumedWith")} {bottle.consumed_with}</Body>}
           {bottle.consumed_food && <Body>{t("consumedFood")} {bottle.consumed_food}</Body>}
-          {bottle.rating && <Stars value={bottle.rating} />}
+          {bottle.status === "consumed" && (
+            <>
+              <T variant="label">{t("yourRating")}</T>
+              <RatingEditor
+                initial={bottle.rating}
+                onSave={async (r) => {
+                  await updateBottle(bottle.id, { rating: r });
+                  await load();
+                }}
+              />
+            </>
+          )}
           {bottle.notes && <Body muted>{bottle.notes}</Body>}
         </Card>
       )}
@@ -341,7 +355,7 @@ function ConsumeForm({
       <Field label={t("consumedWith")} value={withWhom} onChangeText={setWithWhom} />
       <Field label={t("consumedFood")} value={food} onChangeText={setFood} />
       <T variant="label">{t("yourRating")}</T>
-      <Stars value={rating} onChange={setRating} />
+      <RatingInput value={rating} onChange={setRating} />
       <Field label={t("notes")} value={notes} onChangeText={setNotes} multiline />
       <ErrorText>{error}</ErrorText>
       <Button
@@ -366,5 +380,32 @@ function ConsumeForm({
       />
       <Button title={t("cancel")} variant="secondary" onPress={onCancel} />
     </Card>
+  );
+}
+
+/** Betyg på en drucken flaska. Sparas en stund efter sista ändringen. */
+function RatingEditor({ initial, onSave }: { initial: number | null; onSave: (r: number | null) => Promise<void> }) {
+  const t = useT();
+  const [value, setValue] = useState(initial);
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const change = (v: number | null) => {
+    setValue(v);
+    setState("saving");
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      onSave(v).then(() => setState("saved"), () => setState("error"));
+    }, 700);
+  };
+
+  return (
+    <>
+      <RatingInput value={value} onChange={change} />
+      {state !== "idle" && (
+        <T variant="muted">{state === "saving" ? t("saving") : state === "saved" ? t("saved") : t("error")}</T>
+      )}
+    </>
   );
 }
