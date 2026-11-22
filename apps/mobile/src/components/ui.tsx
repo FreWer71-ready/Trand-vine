@@ -15,6 +15,7 @@ import {
   type TextStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocale } from "../lib/i18n.tsx";
 import { READABLE_MAX, useLayout } from "../lib/layout.ts";
 import { useTheme } from "../lib/theme.tsx";
 
@@ -349,17 +350,106 @@ export function Tags({ items }: { items: string[] }) {
   );
 }
 
-export function Stars({ value, onChange }: { value: number | null; onChange?: (v: number) => void }) {
-  const theme = useTheme();
+/** Betyg 1–5 med en decimal, visat som 3,5. */
+export function formatRating(value: number, locale: string): string {
+  return value.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+/** Avrundar till en decimal inom 1–5. */
+export function clampRating(v: number): number {
+  return Math.min(5, Math.max(1, Math.round(v * 10) / 10));
+}
+
+/** En stjärna: hel, halv eller tom. Halvan är en fylld stjärna klippt till vänstra halvan. */
+function Star({ fill, size, color }: { fill: 0 | 0.5 | 1; size: number; color: string }) {
+  // Glyfen centreras i en ruta med fast bredd, så att halva rutan är exakt halva stjärnan.
+  const box = { width: size, height: size * 1.25 } as const;
+  const glyph = { fontSize: size, color, lineHeight: size * 1.25, width: size, textAlign: "center" } as const;
   return (
-    <View style={{ flexDirection: "row", gap: 6 }}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Pressable key={n} disabled={!onChange} onPress={() => onChange?.(n)} accessibilityLabel={`${n}`}>
-          <Text style={{ fontSize: onChange ? 32 : 18, color: theme.colors.accent }}>
-            {value !== null && n <= Math.round(value) ? "★" : "☆"}
-          </Text>
-        </Pressable>
-      ))}
+    <View style={box}>
+      <Text style={glyph}>{fill === 1 ? "★" : "☆"}</Text>
+      {fill === 0.5 && (
+        <View style={{ position: "absolute", left: 0, top: 0, height: box.height, width: size / 2, overflow: "hidden" }}>
+          <Text style={glyph}>★</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+/** Hur stjärna n ska fyllas för ett betyg, avrundat till närmaste halva. */
+export function starFill(value: number | null, n: number): 0 | 0.5 | 1 {
+  if (value === null) return 0;
+  const half = Math.round(value * 2) / 2;
+  return n <= half ? 1 : n - 0.5 === half ? 0.5 : 0;
+}
+
+/** Stjärnor med halva stjärnor och betyget som siffra bredvid (t.ex. ★★★½ 3,7). */
+export function Stars({ value, showValue = true, size = 18 }: { value: number | null; showValue?: boolean; size?: number }) {
+  const theme = useTheme();
+  const locale = useLocale();
+  return (
+    <View
+      style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+      accessibilityLabel={value !== null ? `${formatRating(value, locale)} / 5` : undefined}
+    >
+      {[1, 2, 3, 4, 5].map((n) => <Star key={n} fill={starFill(value, n)} size={size} color={theme.colors.accent} />)}
+      {showValue && value !== null && (
+        <T variant="strong" style={{ marginLeft: theme.space.sm }}>{formatRating(value, locale)}</T>
+      )}
+    </View>
+  );
+}
+
+/**
+ * Sätt betyg: tryck på vänstra halvan av en stjärna för en halv, högra för hel.
+ * Finjustera med − och + i steg om 0,1.
+ */
+export function RatingInput({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
+  const theme = useTheme();
+  const locale = useLocale();
+  const c = theme.colors;
+  const size = 34;
+  const stepBtn = (d: number, sign: string) => {
+    const disabled = value === null || (d < 0 ? value <= 1 : value >= 5);
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${sign}0,1`}
+        disabled={disabled}
+        onPress={() => value !== null && onChange(clampRating(value + d))}
+        style={{
+          width: 40, height: 40, borderRadius: theme.radius.chip, borderWidth: 1, borderColor: c.border,
+          backgroundColor: c.surface, alignItems: "center", justifyContent: "center", opacity: disabled ? 0.4 : 1,
+        }}
+      >
+        <Text style={{ color: c.text, fontSize: 20, fontFamily: theme.fonts.body.native }}>{sign}</Text>
+      </Pressable>
+    );
+  };
+  return (
+    <View style={{ gap: theme.space.sm }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <View key={n}>
+            <Star fill={starFill(value, n)} size={size} color={c.accent} />
+            <View style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, flexDirection: "row" }}>
+              <Pressable style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={`${n - 0.5}`} onPress={() => onChange(n - 0.5 < 1 ? 1 : n - 0.5)} />
+              <Pressable style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={`${n}`} onPress={() => onChange(n)} />
+            </View>
+          </View>
+        ))}
+      </View>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: theme.space.md }}>
+        {stepBtn(-0.1, "−")}
+        <T variant="title" style={{ minWidth: 48, textAlign: "center" }}>{value !== null ? formatRating(value, locale) : "–"}</T>
+        {stepBtn(0.1, "+")}
+        {value !== null && (
+          <Pressable accessibilityRole="button" onPress={() => onChange(null)} style={{ padding: 8 }}>
+            <Text style={{ color: c.textMuted, fontFamily: theme.fonts.body.native }}>✕</Text>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }

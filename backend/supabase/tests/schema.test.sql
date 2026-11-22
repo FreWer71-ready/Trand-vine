@@ -100,18 +100,31 @@ do $$ begin
   assert (select rating_count from vintages where id = '20000000-0000-0000-0000-000000000001') = 3, 'ingen dubbelräkning';
 end $$;
 
+-- Betyg med decimal: 3,5 räknas in i medelbetyget (4*2 + 3.5) / 3 = 3.83
+update bottles set rating = 3.5 where id = '30000000-0000-0000-0000-000000000001';
+do $$ begin
+  assert (select rating from bottles where id = '30000000-0000-0000-0000-000000000001') = 3.5, 'decimalbetyg sparas';
+  assert (select avg_rating from vintages where id = '20000000-0000-0000-0000-000000000001') = 3.83, 'medelbetyg med decimal';
+  begin
+    update bottles set rating = 5.5 where id = '30000000-0000-0000-0000-000000000001';
+    raise exception 'borde nekas: betyg över 5';
+  exception when check_violation then null;
+  end;
+end $$;
+update bottles set rating = 3 where id = '30000000-0000-0000-0000-000000000001';
+
 -- Tre flaskor som en post; dricker en → posten har två kvar, den druckna blir egen rad
 insert into bottles (id, vintage_id, acquisition_type, price, currency, store, quantity) values
   ('30000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000001', 'purchase', 300, 'SEK', 'Systembolaget', 3);
 do $$
 declare taken uuid;
 begin
-  taken := take_bottle('30000000-0000-0000-0000-000000000003', 'consumed', '2026-01-01', 'Bo', null, 3::smallint, null);
+  taken := take_bottle('30000000-0000-0000-0000-000000000003', 'consumed', '2026-01-01', 'Bo', null, 4.5, null);
   assert taken <> '30000000-0000-0000-0000-000000000003', 'ny rad för uttagen flaska';
   assert (select quantity from bottles where id = '30000000-0000-0000-0000-000000000003') = 2, 'två kvar';
   assert (select status from bottles where id = '30000000-0000-0000-0000-000000000003') = 'in_cellar', 'posten ligger kvar';
   assert (select (status, quantity, store, consumed_with, rating) from bottles where id = taken)
-    = ('consumed'::bottle_status, 1, 'Systembolaget'::text, 'Bo'::text, 3::smallint), 'uttagen flaska';
+    = ('consumed'::bottle_status, 1, 'Systembolaget'::text, 'Bo'::text, 4.5::numeric(2,1)), 'uttagen flaska';
   perform take_bottle('30000000-0000-0000-0000-000000000003', 'given_away', '2026-01-02');
   taken := take_bottle('30000000-0000-0000-0000-000000000003', 'consumed', '2026-01-03');
   assert taken = '30000000-0000-0000-0000-000000000003', 'sista flaskan tar posten själv';
@@ -184,7 +197,7 @@ do $$ begin
   assert (select count(*) from bottles) = 0, 'Bo ser inte Annas flaskor';
   assert (select count(*) from ratings) = 0, 'Bo ser inte Annas betyg';
   assert (select count(*) from my_wine_history('10000000-0000-0000-0000-000000000001')) = 0, 'Bo har ingen historik';
-  assert (select avg_rating from vintages where id = '20000000-0000-0000-0000-000000000001') = 3.67, 'Bo ser medelbetyget';
+  assert (select avg_rating from vintages where id = '20000000-0000-0000-0000-000000000001') = 4.17, 'Bo ser medelbetyget (Annas senaste betyg 4,5)';
   assert (select count(*) from wine_barcodes where ean = '4006381333931') = 1, 'Bo får träff på Annas streckkod';
   update bottles set rating = 1;
   assert not found, 'Bo kan inte ändra Annas flaskor';
